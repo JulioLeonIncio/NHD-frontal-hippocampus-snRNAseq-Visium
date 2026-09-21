@@ -1,0 +1,135 @@
+folder,file,prefix,purpose
+atlas_build,NHD_QC_Azimuth+Harmony.R,,"per-library quality control, doublet removal, Azimuth annotation and the first Harmony integration of the single-nucleus libraries."
+scripts,01_build_FH_atlas.R,1,Foundation. Re-cluster/normalize the Frontal+Hippocampus data with OCC removed and QC tightened to nFeature_RNA > 200. Mirrors Steps 5-9 of the
+scripts,02_TF_activity_FH.R,2,Frontal+Hippocampus-only rebuild (Occipital dropped)
+scripts,2A_micro_UMAP_FH.R,2,"Microglia-subset UMAP panels for Figure 2, frontal + HIPPOCAMPUS (2 regions). Port of 48_fig2_micro_UMAP.R."
+scripts,2B_micro_program_violins_FH.R,2,Figure 2 panel b (leads): microglial-PROGRAM signature violins across frontal + HIPPOCAMPUS (2 regions). Port of
+scripts,2C_micro_volcano_MAST_FH.R,2,"Figure 2 panel c: per-nucleus MAST microglia volcano, frontal + HIPPOCAMPUS (2 regions). Faithful port of the 3-region"
+scripts,2D_secretome_MAST_FH.R,2,"Figure 2 panel d: microglial SECRETOME, MAST-forward, frontal + HIPPOCAMPUS (2 regions). Faithful port of _run_3I_secretome_MAST.R."
+scripts,2E_states_MAST_GSEA_FH.R,2,"Figure 2 panel e: MAST-forward curated microglia state enrichment by effect-size preranked GSEA (signed winsorized avg_log2FC),"
+scripts,2G_micro_region_venn_FH.R,2,"Figure 2 panel g: microglia regional-overlap Venn, frontal vs HIPPOCAMPUS (2 circles). Port of 54_fig2_micro_region_venn.R"
+scripts,2H_zhou_validation_FH.R,2,"Figure 2 panel h (CLOSES): cross-cohort validation vs Zhou 2023, frontal + hippocampus. Port of 58_fig2_zhou_validation.R."
+scripts,2I_micro_DAM_arrest_FH.R,2,Figure 2 panel I: the DAM-1 -> DAM-2 arrest contrast. frontal + HIPPOCAMPUS (2 regions). Microglia (Micro-PVM).
+scripts,2J0_micro_states_cache_FH.R,2,Shared microglial-state cache for Figure 2.
+scripts,2L0_pvm_identify_FH.R,2,Is there a resolvable PVM / border-associated macrophage population inside the Micro-PVM subset? diagnostic only.
+scripts,2L_pvm_vs_microglia_FH.R,2,PVM / border-associated macrophages vs parenchymal
+scripts,2N_immune_UMAP_FH.R,2,Immune-compartment UMAP: Microglia / PVM / T-lymphocytes.
+scripts,2O_alt_composition_designs_FH.R,2,"Alternative designs for the NHD immune proportion panel (""generate a couple of alternatives more"")."
+scripts,2O_immune_composition_markers_FH.R,2,NHD immune compartment: proportions + three-population marker panel (Microglia / PVM / CD8 T-lymphocyte).
+scripts,2Y_compensatory_routes_FH.R,2,which ACTIVATING ROUTES are engaged when DAP12 protein is absent but its transcript is intact?
+scripts,3A_micro_glia_chord_FH.R,3,"Figure 3 panel a: CON vs NHD chord plots of the curated micro->glia signalling programme, frontal + HIPPOCAMPUS (2 regions)."
+scripts,3B_micro_glia_LR_FH.R,3,"Figure 3 panel b: microglia -> glial-receiver ligand-receptor rewiring, frontal + HIPPOCAMPUS (2 regions). Faithful port of"
+scripts,3D_astro_reactive_dotmatrix_FH.R,3,"Compact companion to Figure 3d, frontal + hippocampus. Port of 63_fig3_astro_reactive_dotmatrix.R."
+scripts,3D_astro_state_violins_FH.R,3,"Figure 3 panel d: astrocyte reactive-state signature violins + stats, frontal + HIPPOCAMPUS (2 regions). Port of"
+scripts,3E_astro_GSEA_dotplot_FH.R,3,"Figure 3 panel e: astrocyte GSEA dot-matrix, frontal + hippocampus. Port of the astro-GSEA part of 45_fig3_astro_oligo_MAST.R."
+scripts,3F_oligo_embed_states_FH.R,3,Shared oligo re-embed + continuum states + Monocle 3 pseudotime cache for the Figure-3 oligo half (panels f/h/i/j).
+scripts,3Fp_oligo_lineage_block_FH.R,3,"Figure 3f: oligodendrocyte maturation- continuum signature block (NHD-vs-CON), frontal + hippocampus."
+scripts,3G_oligo_gene_panel_FH.R,3,"Figure 3g: oligodendrocyte per-cell gene panel, frontal + hippocampus. Port of 09l_oligo_gene_heatmap_horizontal.R (atlas-light; reads the FH oligo MAST tables — no Seurat object needed)."
+scripts,3I_oligo_state_dotplot_FH.R,3,Figure 3i: marker dotplot for the oligo maturation-continuum positions + the 2 NHD states. frontal + hippocampus.
+scripts,3J_oligo_dissociation_curves_FH.R,3,Figure 4 (main): curated 3x4 pseudotime dissociation panel. CON-vs-NHD loess curves along the oligodendrocyte maturation
+scripts,3K_oligo_state_composition_FH.R,3,"Figure 3k: oligo state-proportion shift, CON vs NHD, per region (Frontal, Hippocampus-grey-lowN). frontal + hippo."
+scripts,3M_prep_opc_and_scales_FH.R,3,Shared prep for the Figure-4 additions (Frontal + Hippocampus rebuild; no OCC anywhere).
+scripts,3N_micro_oligolineage_LR_datadriven_FH.R,3,"Figure 4, NEW panel:"
+scripts,3_astro_UMAP_FH.R,3,"Astrocyte-subset UMAP panels for Figure 3, frontal + HIPPOCAMPUS (2 regions). Port of 60_fig3_astro_umap.R to the FH rebuild."
+scripts,3_astro_volcano_MAST_FH.R,3,"Figure 3: per-nucleus MAST astrocyte volcano, frontal + HIPPOCAMPUS (2 regions). Port of _run_3D_astro_volcano_MAST.R."
+scripts,3_astro_zhou_validation_FH.R,3,"Figure 3: cross-cohort validation vs Zhou 2023, ASTROCYTES, frontal + hippocampus. ASTRO sibling of 2H_zhou_validation_FH.R."
+scripts,4B_neuron_volcano_grid_MAST_FH.R,4,"Figure 4 panel e: per-nucleus MAST neuron volcano grid, frontal + hippocampus. Faithful port of manuscript_7fig/scripts/"
+scripts,4C2_neuron_programme_dotmatrix_FH.R,4,"Figure 5: neuronal programme dot-matrix, replacing the violin panel (""for the neuronal panels lets replace the violin module scores for dot plots"")."
+scripts,4C_hippo_subtype_marker_validation_FH.R,4,Figure 4 panel c:
+scripts,4C_signature_violins_FH.R,4,"Figure 4 panel f: neuronal programme-module signature violins, frontal + hippocampus. Faithful port of manuscript_7fig/"
+scripts,4E_LR_pairs_ExInh_FH.R,4,"Figure 4 (Part B): microglia -> Ex/Inh neuron ligand-receptor pair bubble, frontal + hippocampus. Faithful port of"
+scripts,4E_micro_to_ExInh_chord_FH.R,4,"Figure 4 (Part B): CON vs NHD chord plots of the microglia -> Ex/Inh neuron signalling programme, frontal + hippocampus."
+scripts,4G_astro_neuron_LR_FH.R,4,"Figure 4 (Part B): astrocyte -> Ex/Inh neuron ligand-receptor pair bubble, frontal + hippocampus. Port of the 4E-grammar"
+scripts,4Z_volcano_composite_FH.R,4,Figure 4: Oligodendrocyte and OPC thematic volcanoes side by side in one panel.
+scripts,4_micro_neuron_subtype_LR_FH.R,4,"Figure 4 (Part B): subtype-resolved micro->neuron receptor readout, frontal + hippocampus."
+scripts,4_oligolineage_volcano_MAST_FH.R,4,"Figure 4: thematic volcano for the oligodendrocyte lineage. One script, two cell types:"
+scripts,06d_figure1_umap_compact_FH.R,6,"Figure 1 panel b (FH rebuild) — compact atlas UMAP, SCZ-resubmission style."
+scripts,22_publication_theme_FH.R,22,Publication theme + palettes — frontal + hippocampus rebuild (used by other scripts via source())
+scripts,30_pseudobulk_wald_FH.R,30,"Pseudobulk DESeq2 tier-2, frontal+hippo rebuild."
+scripts,40_mast_percell_dual_FH.R,40,"Per-nucleus MAST discovery tier, frontal+hippo rebuild."
+scripts,40b_mast_microglia_only_FH.R,40,Per-nucleus MAST for the split myeloid classes.
+scripts,41_merge_dual_method_FH.R,41,"Merge MAST discovery + pseudobulk, frontal+hippo."
+scripts,41b_build_microglia_mast_tables_FH.R,41,"Drop-in MAST tables for the split myeloid classes, in the canonical schema the Figure-2 panels already expect."
+scripts,43_fig1_def_MAST_2region_FH.R,43,43_fig1_def_MAST_2region_FH.R (frontal + hippocampus rebuild)
+scripts,44_gsea_MAST_cliffs_FH.R,44,"GSEA preranked on signed winsorized avg_log2FC, frontal+hippo rebuild, broad cell types. Faithful copy of"
+scripts,44b_gsea_subclass_FH.R,44,"GSEA (Hallmark) for the neuron subclass / subtype layer, frontal+hippo rebuild. Faithful port of the subclass/Hallmark part of"
+scripts,45_mast_subclass_FH.R,45,"Per-nucleus MAST at neuron subclass resolution, frontal+hippo rebuild. Faithful port of manuscript_7fig/scripts/45_mast_subclass.R."
+scripts,47_full_expressed_ranking_FH.R,47,"Full-expressed GSEA preranking inputs, broad cell types, frontal+hippo rebuild. Faithful copy of scripts/47_full_expressed_ranking.R"
+scripts,47b_full_expressed_subclass_FH.R,47,"Full-expressed GSEA preranking inputs for the neuron subclass / subtype layer, frontal+hippo rebuild. Faithful port of"
+scripts,50_cellchat_LR_FH.R,50,"CellChat ligand-receptor signaling layer, frontal + hippocampus rebuild (OCC fully dropped)."
+scripts,60_neuron_reannotation_FH.R,60,60_neuron_reannotation_FH.R Re-annotate neurons on the NEW Frontal+Hippocampus atlas (Fig 4 prerequisite).
+scripts,62_fig4_neuron_zhou_validation_FH.R,62,"Figure 4 panel i: cross-cohort generalization vs Zhou 2023, excitatory neurons, frontal + hippocampus."
+scripts,64_fig4_neuron_umap_FH.R,64,"Neuron UMAP composites for Figure 4 (two composites), frontal + hippocampus rebuild. Faithful port of manuscript_7fig/scripts/"
+scripts,65_visium_prep_depthmatched_FH.R,65,Shared prep for the rebuilt Visium figure.
+scripts,66_visium_markers_panel_FH.R,66,"Figure 6: ""6_depth_matched_markers""."
+scripts,67_visium_supplychain_spatial_FH.R,67,"Figure 6: ""6_supplychain_spatial"" and its quantitative companion ""6_supplychain_matched""."
+scripts,67b_visium_fig6e_alldepth_FH.R,67,"Fig. 6e spatial maps of the two showcase programs on every spot at native depth (no 3,000-UMI floor), so the white matter is drawn."
+scripts,68_micro_TF_collectri_FH.R,68,"Which transcription factors govern the MICROGLIAL NHD-vs-CON difference, in Frontal and Hippocampus."
+scripts,70_suppfig1_NHD_QC_FH.R,70,"Supplementary Figure 1 — NHD single-nucleus atlas QC + annotation frontal + hippocampus rebuild (2 regions, 7 libraries, 55,354 nuclei)"
+scripts,70_zhou_crosscohort_FH.R,70,Zhou 2023 (PMID 36658241) cross-cohort direction- concordance stats for the Frontal+Hippocampus-only rebuild. data layer only
+scripts,70b_micro_TF_bipartite_FH.R,70,"Figure 2: ""F2h_micro_TF_bipartite"" Microglial (Micro-PVM) regulator -> target map, NHD vs control."
+scripts,71_visium_fig6_overview_FH.R,71,"Figure 6, column 1: the tissue and its controls."
+scripts,72_visium_fig6_cascade_FH.R,72,"Figure 6, column 3: the cascade in tissue."
+scripts,73_visium_gene_heatmap_FH.R,73,"Figure 6: ""F6d_supplychain_genes""."
+scripts,74_visium_fig6_abc_FH.R,74,"Figure 6 panels a, b, c, rebuilt inside this project."
+scripts,90_build_supplementary_tables_FH.R,90,90_build_supplementary_tables_FH.R Build all supplementary tables (ST1-ST14) + Table 1 for the NHD
+scripts,92_micro_only_MAST_FH.R,92,"Microglia-ONLY differential expression, run with the identical model to the pooled Micro-PVM run that produced ST1."
+scripts,99b_crosscohort_summary_FH.R,99,Every cross-cohort comparison in one panel.
+scripts,99c_crosscohort_donor861_panel_FH.R,99,"Supplementary Fig. 2, panel f: the cross-cohort contrast with and without the shared donor (861 = Zhou NHD3)."
+scripts,100_package_supplementary_data_FH.R,100,"Package the supplementary tables for the journal as ""Supplementary Data 1-11"": eleven themed multi-sheet workbooks."
+scripts,102_export_deposition_bundle_FH.R,102,"Processed-data bundle for repository deposition (GEO / DDBJ-GEA style), so the Data Availability statement can be filled the day the"
+scripts,105_zhou_pseudobulk_cache_FH.R,105,"One load of the re-processed Zhou 2023 object, cached as per-cell-type pseudobulk count matrices + the per-sample metadata."
+scripts,106_zhou_crosscohort_arms_FH.R,106,"The Zhou 2023 contrast without donor 861, and its two companions, with the ST13 direction-consistency statistic recomputed per arm."
+scripts,107_visium_HE_fetch_FH.sh,107,Fetch the four full-resolution Visium H&E TIFFs from RIKEN.
+scripts,108a_visium_HE_crop_FH.py,108,Crop each full-resolution Visium H&E to the spot extent used by Fig. 6b and put it into Fig. 6b's plotting frame.
+scripts,108b_visium_HE_panel_FH.R,108,"Fig. 6b rebuilt as two rows: H&E of each capture area (top) over the spatial-domain map (bottom), in identical frames."
+scripts,108c_visium_HE_registration_check_FH.py,108,"Visium barcode-map registration: check. Is each section's barcode->pixel map registered to its H&E? Data-driven, independent of Space Ranger's"
+scripts,108d_visium_NHD2_registration_outs_FH.py,108,Visium barcode-map registration: reflection + tissue mask.
+scripts,108e_visium_NHD2_registration_filtered_FH.py,108,Visium barcode-map registration: filtered matrix.
+scripts,109_suppfig5_split_umaps_FH.R,109,Supplementary Fig. 5: the five main-figure embeddings shown separately by condition x region (comment 2; Task A).
+scripts,110b_micro_gsea_gated_FH.R,110,"Microglial GO:BP + Reactome fgsea with the detection GATE, for Supplementary Fig. 3g."
+scripts,111_visium_proximity_severity_FH.R,111,Does the microglial state and its downstream consequences co-localize in tissue?
+scripts,112_visium_downstream_rebuild_FH.sh,112,"Visium downstream rebuild driver: re-runs every step after integration + cell2location, in dependency order, with a gate on the deconvolution outputs."
+scripts,112b_visium_rebuild_after_c2l_FH.sh,112,"Poll until the local cell2location driver prints done, then run the Visium rebuild driver (112)."
+scripts,114_visium_domain_composition_FH.R,114,"Supplementary Fig. 6 panels b and c: cell2location composition of every spatial domain, CON beside NHD, and its NHD / CON ratio."
+scripts,115_visium_qc_summary_FH.R,115,"Inputs : Visium/cell2location/c2l_MAIN/visium_meta.csv (the integrated object's metadata, script 01f)"
+scripts,116a_export_Jorstad_DFC_reference_FH.py,116,"Export the Jorstad et al. 2023 dorsolateral prefrontal cortex (DFC, 10x 3' v3, 5 donors) excitatory nuclei as a 10x-style MTX bundle for Seurat label transfer."
+scripts,116b_L4_label_transfer_DFC_FH.R,116,Re-annotate frontal excitatory nuclei against the Jorstad 2023 dorsolateral prefrontal cortex reference (has an L4 IT class).
+scripts,117a_visium_tissue_call_audit_FH.py,117,Audit of the Space Ranger tissue call (in_tissue) per section.
+scripts,117b_visium_tissue_call_outs_FH.py,117,Evidence-based tissue call for all four Visium sections.
+scripts,118_visium_L1_validation_FH.R,118,"Does the recovered rim behave as layer I / pia, and does an L1 domain separate from white matter?"
+scripts,119_visium_sulcus_L1_check_FH.R,119,"Triple check of the pathologists' anatomical annotation against the Visium domain labels, spot by spot, in all four sections."
+scripts,119b_visium_L1band_interior_FH.py,119,Band interior of the pathologists' layer-I annotation.
+scripts,120_visium_L1_histology_refinement_FH.R,120,Histology-guided refinement of the Visium domain map.
+scripts,121_visium_banksy_domains_FH.R,121,BANKSY + Harmony domain segmentation of the NHD Visium sections with the SCZ-project recipe (Visium/_banksy_reference_SCZ/Bansky_alone.R; banksy_NHD_frontal/banksy_NHD_frontal.R):
+scripts,123_visium_L4IT_signal_vs_order_FH.R,123,"Diagnostic: is layer IV missing from the NHD Visium map because L4 IT neurons are gone, or because they no longer form a band? snRNA-seq says the L4 IT share is unchanged"
+scripts,125_visium_domain_annotation_table_FH.R,125,"Supplementary Data 11, sheets Spot_annotation + Layer_IV_order (internal ST22): the per-spot Visium"
+scripts,126_visium_program_tables_FH.R,126,"Supplementary Data 11, sheets Programs_per_domain / Genes_by_band / Gene_sets_Visium (internal ST23): the Visium program expression"
+scripts,127_program_delta_table_FH.R,127,"Supplementary Data 7, sheets Program_deltas + By_program (internal ST24): program-level Cliff's delta, NHD versus"
+scripts,_ST0_data_dictionary_FH.R,,"_ST0_data_dictionary_FH.R Authored content for ST0, the supplementary-table data dictionary."
+scripts,_artifact_genes.R,,Ambient / artifact gene filter
+scripts,_astro_inline_sets_FH.R,,"Single source for the astrocyte-state gene sets that Figure 3e,f scores but that do not live in data/curated_signatures.rds."
+scripts,_gsea_composite_metric.R,,"Shared GSEA preranking metric (single source of truth, sourced by both 44_gsea_MAST_cliffs.R and _run_3C_states_MAST_GSEA.R so the metric is computed identically everywhere)."
+scripts,_neuron_subclass_FH.R,,Single source for the per-nucleus neuron subclass / subtype label used by every Figure 5 / supplementary script.
+scripts,_oligo_programmes_FH.R,,Single source for the oligodendrocyte-lineage programme gene sets used by Figure 4.
+scripts,_pan2024_csf1r_signatures.R,,"Pan et al. 2024 (Acta Neuropathol Commun, PMC11365264) CSF1R-RD microglia / oligo / OPC state SIGNATURES, curated for the NHD cross-microgliopathy"
+scripts,_sd_map_FH.R,,"The fixed map of the ""Supplementary Data"" package:"
+scripts,_visium_L1_annotation_rule_FH.R,,"Single source for how the digitised dashed lines of the pathologists' H&E annotation (tables/annotation_dashes_20260918_mapunits.csv; Fig6_260918_anatomy.pdf, 600 dpi) are grouped into components and"
+scripts,_visium_depth_FH.R,,Single source for the derived cortical-depth axis used by the Figure-6 panels. Sourced by 71 and 72 so they cannot drift apart.
+scripts,_visium_domains_FH.R,,Single source for the Visium spatial-domain vocabulary.
+scripts,_visium_outs_FH.R,,Single source for which Space Ranger outs folder each Visium section is read from.
+scripts,_zhou_crosscohort_core_FH.R,,"The per-panel cross-cohort statistic (ST13 schema), Sourced by 70 and 106. Reads these objects from the caller's global environment:"
+zhou_reprocessing,01_zhou_QC_Azimuth_Harmony.R,1,"Zhou et al. 2023 occipital-cortex cohort (GEO GSE190015): GEO metadata, per-sample mitochondrial and doublet filtering, merge, PMI from the paper's supplementary table, Azimuth annotation, SCTransform"
+visium,01e_prep_NHD.R,1,"NHD frontal deconvolution — port of SCZ 01e_prep_MAIN_BANKSY.R (the proven, successful local recipe). Exports snRNA reference (8 broad new_annotation main cell types: Oligo, Neuron_Ex, Neuron_Inh, Astro, OPC, Micro-PVM, Pericytes, Endo) + integrated 4-frontal Visium query to dependency-free mtx bundles."
+visium,01f_prep_visium_query.R,1,Visium query export for the spatial mapping step: writes only the Visium query bundle
+visium,02e_run_NHD.py,2,NHD cell2location.
+visium,02f_run_NHD_spatial.py,2,NHD cell2location.
+visium,03e_export_NHD.py,3,NHD cell2location step 3 — join per-spot abundance to spatial metadata.
+zhou_reprocessing,04_zhou_cross_cohort_validation.R,4,Script 04 — Zhou et al. 2023 Nat Immunol cross-cohort validation
+zhou_reprocessing,22_publication_theme.R,22,Publication theme + palettes (used by other scripts via source())
+zhou_reprocessing,70_suppfig2_zhou_QC.R,70,Supplementary Figure 2 — Zhou et al. 2023 external cohort: QC + annotation
+visium,annotate_clusters.R,,(b) Annotate the 9 integrated Harmony clusters: DGE per cluster + canonical marker dotplot (SCZ Fig1_supp-d style) + identity assignment.
+visium,assemble_figure_Visium.R,,"Apparent-type lift: all text sizes x1.25. These panels are placed at scale 0.43-0.59 in the assembled Figure 6, so their 7-9 pt type was reading at only"
+visium,integrated_harmony.R,,"NHD Visium frontal — standard INTEGRATED pipeline (Seurat + Harmony, all 4 CON+NHD samples). Overview/atlas view (mirrors SCZ Fig1_supp b/c):"
+visium,propose_identity_20260918.R,,Propose cluster identities for the L1-recovered integration.
+visium,refresh_identity.R,,Lightweight refresh of cluster identity from the current integrated object (identity CSV was Jun 10).

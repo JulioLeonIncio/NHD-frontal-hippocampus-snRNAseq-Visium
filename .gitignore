@@ -1,0 +1,24 @@
+# R
+.Rhistory
+.RData
+.Rproj.user/
+*.Rproj
+Rplots.pdf
+# Python
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+# macOS
+.DS_Store
+# large data objects and caches are never committed
+*.rds
+*.h5
+*.h5ad
+*.mtx
+*.mtx.gz
+logs/
+data/
+atlas/
+# release bookkeeping
+_release_clean_report.txt
+_release_headers.tsv

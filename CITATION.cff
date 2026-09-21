@@ -1,0 +1,20 @@
+cff-version: 1.2.0
+message: "If you use this code, please cite the article and this repository."
+title: "Analysis code for: Nasu-Hakola disease frontal cortex and hippocampus snRNA-seq and Visium"
+type: software
+authors:
+  - family-names: Leon
+    given-names: Julio
+    affiliation: "Institute for Neurodegenerative Diseases, University of California, San Francisco, USA"
+    email: julio.leon@ucsf.edu
+version: 1.0.0
+date-released: 2026-09-21
+license: MIT
+doi: 10.5281/zenodo.XXXXXXX            # fill in after the Zenodo archive is created
+repository-code: https://github.com/JulioLeonIncio/NHD-frontal-hippocampus-snRNAseq-Visium
+keywords:
+  - Nasu-Hakola disease
+  - TYROBP
+  - single-nucleus RNA-seq
+  - Visium spatial transcriptomics
+  - microglia
