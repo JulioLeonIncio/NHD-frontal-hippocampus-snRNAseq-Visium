@@ -7,10 +7,11 @@ authors:
     given-names: Julio
     affiliation: "Institute for Neurodegenerative Diseases, University of California, San Francisco, USA"
     email: julio.leon@ucsf.edu
+    orcid: https://orcid.org/0000-0002-1113-4544
 version: 1.0.0
 date-released: 2026-09-21
 license: MIT
-doi: 10.5281/zenodo.XXXXXXX            # fill in after the Zenodo archive is created
+doi: 10.5281/zenodo.22884860            # Zenodo archive of v1.0-submission (2026-09-21); concept DOI 10.5281/zenodo.22884859 = all versions
 repository-code: https://github.com/JulioLeonIncio/NHD-frontal-hippocampus-snRNAseq-Visium
 keywords:
   - Nasu-Hakola disease
