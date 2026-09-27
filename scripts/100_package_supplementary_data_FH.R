@@ -57,9 +57,9 @@ for (.f in c("SD_rename_map.csv", "FIND_REPLACE_for_docx.md", "MANIFEST.md", "Su
 # ---- the fixed map (scripts/_sd_map_FH.R) -----------------------------------
 source(file.path(PROJ, "scripts", "_sd_map_FH.R"))   # SD_WB, SD_SHEETS, SD_DROPPED, SD_OLD_ORDER, SD_TITLE_PUBLIC, sd_ref(), sd_rekey_old(), sd_rename_map()
 N_WB     <- nrow(SD_WB)
-ST_ORDER <- SD_OLD_ORDER                          # the 27 former tables (pre-consolidation order = their old number)
-ST_SHIP  <- unique(SD_SHEETS$st)                  # the 25 that are placed in a workbook
-stopifnot(N_WB == 11L, length(ST_ORDER) == 27L, length(ST_SHIP) == 25L, setequal(setdiff(ST_ORDER, ST_SHIP), c("ST4", "ST5")),
+ST_ORDER <- c(SD_OLD_ORDER, SD_NEW)               # the 27 former tables, then the 7 added after the consolidation
+ST_SHIP  <- unique(SD_SHEETS$st)                  # the 32 that are placed in a workbook
+stopifnot(N_WB == 12L, length(ST_ORDER) == 34L, length(ST_SHIP) == 32L, setequal(setdiff(ST_ORDER, ST_SHIP), c("ST4", "ST5")),
           setequal(SD_DROPPED$st, c("ST4", "ST5")))
 TITLE_PUBLIC <- SD_TITLE_PUBLIC                   # referee-facing title of every former table (the "Holds" line of its README block)
 stopifnot(setequal(names(TITLE_PUBLIC), ST_ORDER))
@@ -97,7 +97,7 @@ title_of <- function(id) {
   if (nrow(r)) r$table_title[1] else NA_character_
 }
 # every shipped table must be documented in ST0, or its README would ship blank
-POST_ST0 <- c("ST18","ST19","ST20","ST21","ST22","ST23","ST24")   # built after the dictionary; documented in this script
+POST_ST0 <- c("ST18","ST19","ST20","ST21","ST22","ST23","ST24", SD_NEW)   # built after the dictionary; documented in this script
 .undoc <- setdiff(ST_ORDER, POST_ST0)[vapply(setdiff(ST_ORDER, POST_ST0), function(i) is.na(title_of(i)), logical(1))]
 if (length(.undoc)) stop("ST0 has no title row for: ", paste(.undoc, collapse = ", "))
 # ST18 is not in ST0 (built after the dictionary); document it here.
@@ -395,6 +395,160 @@ ST3B_COLS <- rbind(
 
 # ---- README helpers ---------------------------------------------------------
 .sep <- function(nm) data.table(column = sprintf("— sheet %s —", nm), type = "", permitted_values = "", definition = "")
+
+# ---------------------------------------------------------------------------------------------
+# ST25-ST31 = source data for the cell-cell communication and composition panels (workbook 12;
+# assembled by 132 from the panel tables themselves, so a number in a sheet is the number drawn).
+# These post-date ST0, so their dictionaries live here beside ST18-ST24 rather than in
+# _ST0_data_dictionary_FH.R, which covers only the tables script 90 builds.
+ST25_TITLE  <- unname(TITLE_PUBLIC[["ST25"]]); ST25_BACKS <- "Fig. 2c"
+ST25_SOURCE <- "2Y_compensatory_routes_FH.R + 132_supp_data_12_communication_FH.R"
+
+ST25_COLS <- data.table(
+  column = c("Region","gene","CON","NHD","raw_pp","delta_pp","fitted","route","below_floor"),
+  type = c("character","character","numeric","numeric","numeric","numeric","integer","character","logical"),
+  permitted_values = c("Frontal | Hippo","gene symbol","0-100","0-100","percentage points","percentage points, or NA","0 | 1","route name","TRUE | FALSE"),
+  definition = c(
+    "Region the row is computed in.",
+    "Secreted or adaptor gene of the route.",
+    "Per cent of control microglia with at least one raw UMI of the gene.",
+    "Per cent of NHD microglia with at least one raw UMI of the gene.",
+    "NHD minus CON of the two columns above, unadjusted.",
+    "Depth-adjusted difference: the contrast of a logistic regression of per-nucleus detection on condition and log10 UMI, evaluated at the region's median depth, so the deeper NHD hippocampal libraries do not raise every route. NA where below_floor is TRUE. This is the value the panel plots.",
+    "1 when the logistic model converged and delta_pp is its contrast; 0 when it could not be fitted and delta_pp falls back to raw_pp.",
+    "Secretory route the gene is grouped under in the panel.",
+    "TRUE when neither condition reaches 2 per cent detection; such genes carry NA for delta_pp and are not interpreted."))
+stopifnot(nrow(ST25_COLS) == 9, !anyDuplicated(ST25_COLS$column))
+
+ST26_TITLE  <- unname(TITLE_PUBLIC[["ST26"]]); ST26_BACKS <- "Fig. 3g; Fig. 3h; Fig. 5e"
+ST26_SOURCE <- "3A_micro_glia_chord_FH.R + 4E_micro_to_ExInh_chord_FH.R + 132_supp_data_12_communication_FH.R"
+
+ST26_COLS <- data.table(
+  column = c("figure_panel","Region","Condition","source","target","pathway_name","prob_sum","total","share"),
+  type = c("character","character","character","character","character","character","numeric","numeric","numeric"),
+  permitted_values = c("Fig. 3g | Fig. 3h | Fig. 5e","Frontal | Hippo","CON | NHD","cell type","cell type","CellChat pathway","0-1","0-1","0-1"),
+  definition = c(
+    "Chord panel the row belongs to.",
+    "Region.",
+    "Condition; each chord is drawn per region and condition.",
+    "Sending cell type, the sector the ribbon leaves.",
+    "Receiving cell type, the sector the ribbon enters.",
+    "Pathway the ribbon is colored by. A pathway name is not a ligand: the GAS6 ligand sits in the pathway GAS.",
+    "Sum of the CellChat communication probabilities of that pathway's ligand-receptor pairs for that sender and receiver.",
+    "Sum of prob_sum over every row of the same panel, region and condition.",
+    "prob_sum divided by total: the share of that panel's probability mass the ribbon carries, which is what sets ribbon width."))
+stopifnot(nrow(ST26_COLS) == 9, !anyDuplicated(ST26_COLS$column))
+
+ST27_TITLE  <- unname(TITLE_PUBLIC[["ST27"]]); ST27_BACKS <- "Fig. 3g; Fig. 4j"
+ST27_SOURCE <- "3B_micro_glia_LR_FH.R + 132_supp_data_12_communication_FH.R"
+
+ST27_COLS <- data.table(
+  column = c("figure_panel","Region","target","interaction_name_2","pathway_name","prob_CON","prob_NHD","delta_prob","pval_CON","pval_NHD","q_BH_CON","q_BH_NHD","sig_any"),
+  type = c("character","character","character","character","character","numeric","numeric","numeric","numeric","numeric","numeric","numeric","logical"),
+  permitted_values = c("Fig. 3g | Fig. 4j","Frontal | Hippo","cell type","LIGAND - RECEPTOR","CellChat pathway","0-1","0-1","-1 to 1","0-1","0-1","0-1","0-1","TRUE | FALSE"),
+  definition = c(
+    "Panel the row belongs to: astrocytes (3g) or the oligodendrocyte lineage (4j).",
+    "Region.",
+    "Receiving cell type.",
+    "CellChat ligand-receptor pair, the key the panel is built on (never the pathway name).",
+    "Pathway the pair belongs to.",
+    "CellChat communication probability in control.",
+    "CellChat communication probability in NHD.",
+    "prob_NHD minus prob_CON, the value the dot color encodes.",
+    "CellChat permutation P value from the default 100 permutations of the condition labels. The grid is therefore 0.01 and a value of 0 means no permutation reached the observed probability, that is P < 0.01; it is a resolution limit, not a double underflow, and must not be read as an exact zero. Control.",
+    "CellChat permutation P value from the default 100 permutations of the condition labels. The grid is therefore 0.01 and a value of 0 means no permutation reached the observed probability, that is P < 0.01; it is a resolution limit, not a double underflow, and must not be read as an exact zero. NHD.",
+    "Benjamini-Hochberg adjustment of pval_CON within the panel; zero is inherited from a permutation P of zero and means q < 0.01.",
+    "Benjamini-Hochberg adjustment of pval_NHD within the panel; zero is inherited from a permutation P of zero and means q < 0.01.",
+    "TRUE when the pair is significant in at least one condition. With one donor per condition a permutation P over nuclei is not donor-level inference; it orders pairs and carries no claim."))
+stopifnot(nrow(ST27_COLS) == 13, !anyDuplicated(ST27_COLS$column))
+
+ST28_TITLE  <- unname(TITLE_PUBLIC[["ST28"]]); ST28_BACKS <- "Fig. 3h"
+ST28_SOURCE <- "4G_astro_neuron_LR_FH.R + 132_supp_data_12_communication_FH.R"
+
+ST28_COLS <- data.table(
+  column = c("Region","class","interaction_name_2","pathway_name","min_pval_CON","min_pval_NHD","min_p_either","q_either","delta","peak","ok","Condition","prob","receptor","rec_delta","rec_disc","rec_pct_max","rec_undetected","rec_stable"),
+  type = c("character","character","character","character","numeric","numeric","numeric","numeric","numeric","numeric","logical","character","numeric","character","numeric","logical","numeric","logical","logical"),
+  permitted_values = c("Frontal | Hippo","Ex | Inh","LIGAND - RECEPTOR","CellChat pathway","0-1","0-1","0-1","0-1","-1 to 1","0-1","TRUE | FALSE","CON | NHD","0-1","gene symbol","-1 to 1, or NA","TRUE | FALSE","0-1","TRUE | FALSE","TRUE | FALSE"),
+  definition = c(
+    "Region.",
+    "Receiving neuronal class.",
+    "CellChat ligand-receptor pair. Pairs whose astrocytic LIGAND carries the ambient-expression flag are excluded from the panel, on the rule the volcanoes use.",
+    "Pathway the pair belongs to.",
+    "CellChat permutation P value from the default 100 permutations of the condition labels. The grid is therefore 0.01 and a value of 0 means no permutation reached the observed probability, that is P < 0.01; it is a resolution limit, not a double underflow, and must not be read as an exact zero. Smallest value for that pair in control.",
+    "CellChat permutation P value from the default 100 permutations of the condition labels. The grid is therefore 0.01 and a value of 0 means no permutation reached the observed probability, that is P < 0.01; it is a resolution limit, not a double underflow, and must not be read as an exact zero. Smallest value for that pair in NHD.",
+    "The smaller of the two columns above.",
+    "Benjamini-Hochberg adjustment of min_p_either within the panel; zero is inherited from a permutation P of zero and means q < 0.01.",
+    "Communication probability in NHD minus control.",
+    "The larger of the two conditions' communication probabilities; sets dot area.",
+    "TRUE when q_either is below 0.1, the panel's inclusion gate.",
+    "Condition of this row; each pair contributes one row per condition.",
+    "Communication probability in this row's condition.",
+    "Receptor side of the pair, whose detection the remaining columns describe.",
+    "Cliff's delta of the receptor in the receiving class, NHD versus control. NA when the receptor is detected but not differentially expressed.",
+    "TRUE when the receptor is lost in the receiver at discovery level; drawn as a black ring.",
+    "Highest fraction of nuclei of the receiving class, in either condition, with at least one RAW count of the receptor. Detection is computed on raw counts because SCT-transformed values fabricate detection.",
+    "TRUE when rec_pct_max is below the 10 per cent floor; drawn as a grey cross. Computed from raw detection, never from absence in a differential-expression table.",
+    "TRUE when the receptor is detected above the floor but has no differential-expression delta, that is, present and unchanged."))
+stopifnot(nrow(ST28_COLS) == 19, !anyDuplicated(ST28_COLS$column))
+
+ST29_TITLE  <- unname(TITLE_PUBLIC[["ST29"]]); ST29_BACKS <- "Fig. 5e"
+ST29_SOURCE <- "4E_LR_pairs_ExInh_FH.R + 132_supp_data_12_communication_FH.R"
+
+ST29_COLS <- data.table(
+  column = c("Region","class","interaction_name_2","pathway_name","min_pval_CON","min_pval_NHD","min_p_either","q_either","delta","peak","Condition","prob"),
+  type = c("character","character","character","character","numeric","numeric","numeric","numeric","numeric","numeric","character","numeric"),
+  permitted_values = c("Frontal | Hippo","Ex | Inh","LIGAND - RECEPTOR","CellChat pathway","0-1","0-1","0-1","0-1","-1 to 1","0-1","CON | NHD","0-1"),
+  definition = c(
+    "Region.",
+    "Receiving neuronal class.",
+    "CellChat ligand-receptor pair.",
+    "Pathway the pair belongs to.",
+    "CellChat permutation P value from the default 100 permutations of the condition labels. The grid is therefore 0.01 and a value of 0 means no permutation reached the observed probability, that is P < 0.01; it is a resolution limit, not a double underflow, and must not be read as an exact zero. Smallest value for that pair in control.",
+    "CellChat permutation P value from the default 100 permutations of the condition labels. The grid is therefore 0.01 and a value of 0 means no permutation reached the observed probability, that is P < 0.01; it is a resolution limit, not a double underflow, and must not be read as an exact zero. Smallest value for that pair in NHD.",
+    "The smaller of the two columns above.",
+    "Benjamini-Hochberg adjustment of min_p_either within the panel; zero is inherited from a permutation P of zero and means q < 0.01.",
+    "Communication probability in NHD minus control.",
+    "The larger of the two conditions' communication probabilities; sets dot area.",
+    "Condition of this row.",
+    "Communication probability in this row's condition."))
+stopifnot(nrow(ST29_COLS) == 12, !anyDuplicated(ST29_COLS$column))
+
+ST30_TITLE  <- unname(TITLE_PUBLIC[["ST30"]]); ST30_BACKS <- "Fig. 5g"
+ST30_SOURCE <- "4_micro_neuron_subtype_LR_FH.R + 132_supp_data_12_communication_FH.R"
+
+ST30_COLS <- data.table(
+  column = c("gene","pathway","subtype","class","Region","avg_exp_CON","avg_exp_NHD","delta_avg","pct_exp_CON","pct_exp_NHD","max_pct"),
+  type = c("character","character","character","character","character","numeric","numeric","numeric","numeric","numeric","numeric"),
+  permitted_values = c("gene symbol","CellChat pathway","neuronal subtype","Ex | Inh","Frontal | Hippo","normalized expression","normalized expression","normalized expression","0-100","0-100","0-100"),
+  definition = c(
+    "Receptor whose expression is reported.",
+    "Pathway of the pair the receptor belongs to.",
+    "Neuronal subtype of the receiving nuclei.",
+    "Class the subtype belongs to.",
+    "Region.",
+    "Mean log-normalized expression of the receptor over control nuclei of that subtype.",
+    "Mean log-normalized expression over NHD nuclei of that subtype.",
+    "avg_exp_NHD minus avg_exp_CON.",
+    "Per cent of control nuclei of that subtype with at least one raw count.",
+    "Per cent of NHD nuclei of that subtype with at least one raw count.",
+    "The larger of the two detection percentages; dots below 10 per cent are drawn hollow, because a mean over almost no nuclei is not interpretable."))
+stopifnot(nrow(ST30_COLS) == 11, !anyDuplicated(ST30_COLS$column))
+
+ST31_TITLE  <- unname(TITLE_PUBLIC[["ST31"]]); ST31_BACKS <- "Fig. 4h"
+ST31_SOURCE <- "3K_oligo_state_composition_FH.R + 132_supp_data_12_communication_FH.R"
+
+ST31_COLS <- data.table(
+  column = c("Region","Condition","oligo_state","n","frac"),
+  type = c("character","character","character","integer","numeric"),
+  permitted_values = c("Frontal | Hippo","CON | NHD","state name","count","0-1"),
+  definition = c(
+    "Region.",
+    "Condition.",
+    "Oligodendrocyte state. The mature population is one continuum rather than discrete subtypes; the states are positions along it.",
+    "Nuclei of that state in that region and condition.",
+    "n divided by the nuclei of that region and condition; sums to 1 within each. With one donor per condition a fraction is an effect size, not donor-level inference."))
+stopifnot(nrow(ST31_COLS) == 5, !anyDuplicated(ST31_COLS$column))
+
 # the column dictionary of a former table, with the "— sheet X —" separators carrying the NEW sheet names
 dict_rows <- function(id) {
   sh <- sd_sheets_of(id)
@@ -406,15 +560,17 @@ dict_rows <- function(id) {
                ST18_COLS[sheet == substr(sh[k], 1, 1), .(column, type = "", permitted_values = "", definition)]))) },
     ST19 = rbind(.sep(sh[1]), ST19_COLS, .sep(sh[2]), ST19B_COLS),
     ST20 = ST20_COLS, ST21 = ST21_COLS,
+    ST25 = ST25_COLS, ST26 = ST26_COLS, ST27 = ST27_COLS, ST28 = ST28_COLS,
+    ST29 = ST29_COLS, ST30 = ST30_COLS, ST31 = ST31_COLS,
     ST22 = rbind(.sep(sh[1]), ST22_COLS, .sep(sh[2]), ST22B_COLS),
     ST23 = rbind(.sep(sh[1]), ST23_COLS, .sep(sh[2]), ST23B_COLS, .sep(sh[3]), ST23C_COLS),
     ST24 = rbind(.sep(sh[1]), ST24_COLS, .sep(sh[2]), ST24B_COLS),
     ST3  = rbind(.sep(sh[1]), dict[table == id, .(column, type, permitted_values, definition)], .sep(sh[2]), ST3B_COLS),
     dict[table == id, .(column, type, permitted_values, definition)])
 }
-backs_of  <- function(id) switch(id, ST18 = ST18_BACKS, ST19 = ST19_BACKS, ST20 = ST20_BACKS, ST21 = ST21_BACKS, ST22 = ST22_BACKS, ST23 = ST23_BACKS, ST24 = ST24_BACKS, titles[table == id]$backs_figures[1])
-source_of <- function(id) switch(id, ST18 = ST18_SOURCE, ST19 = ST19_SOURCE, ST20 = ST20_SOURCE, ST21 = ST21_SOURCE, ST22 = ST22_SOURCE, ST23 = ST23_SOURCE, ST24 = ST24_SOURCE, titles[table == id]$source_script[1])
-title_int <- function(id) switch(id, ST18 = ST18_TITLE, ST19 = ST19_TITLE, ST20 = ST20_TITLE, ST21 = ST21_TITLE, ST22 = ST22_TITLE, ST23 = ST23_TITLE, ST24 = ST24_TITLE, title_of(id))
+backs_of  <- function(id) switch(id, ST18 = ST18_BACKS, ST25 = ST25_BACKS, ST26 = ST26_BACKS, ST27 = ST27_BACKS, ST28 = ST28_BACKS, ST29 = ST29_BACKS, ST30 = ST30_BACKS, ST31 = ST31_BACKS, ST19 = ST19_BACKS, ST20 = ST20_BACKS, ST21 = ST21_BACKS, ST22 = ST22_BACKS, ST23 = ST23_BACKS, ST24 = ST24_BACKS, titles[table == id]$backs_figures[1])
+source_of <- function(id) switch(id, ST18 = ST18_SOURCE, ST25 = ST25_SOURCE, ST26 = ST26_SOURCE, ST27 = ST27_SOURCE, ST28 = ST28_SOURCE, ST29 = ST29_SOURCE, ST30 = ST30_SOURCE, ST31 = ST31_SOURCE, ST19 = ST19_SOURCE, ST20 = ST20_SOURCE, ST21 = ST21_SOURCE, ST22 = ST22_SOURCE, ST23 = ST23_SOURCE, ST24 = ST24_SOURCE, titles[table == id]$source_script[1])
+title_int <- function(id) switch(id, ST18 = ST18_TITLE, ST25 = ST25_TITLE, ST26 = ST26_TITLE, ST27 = ST27_TITLE, ST28 = ST28_TITLE, ST29 = ST29_TITLE, ST30 = ST30_TITLE, ST31 = ST31_TITLE, ST19 = ST19_TITLE, ST20 = ST20_TITLE, ST21 = ST21_TITLE, ST22 = ST22_TITLE, ST23 = ST23_TITLE, ST24 = ST24_TITLE, title_of(id))
 
 CONVENTIONS_LINE <- sprintf("See %s (data dictionary) for analysis-wide conventions: discovery criteria, Cliff's delta, the q* mark, depth matching, the p-underflow floor (2.2250739e-308 means p < 2.2e-308, never p = 0), and NA = not tested.", sd_ref("ST0"))
 
@@ -455,7 +611,9 @@ rekey_dt <- function(d, where) {
   if (n > 0) REKEY_LOG[[where]] <<- n
   d
 }
-OLD_NUM_PAT <- "Supplementary Data (1[2-9]|2[0-7])\\b"
+# 12 left this pattern when workbook 12 was created — "Supplementary Data 12" is now a
+# legitimate forward citation, not a surviving pre-consolidation one (see sd_rekey_old).
+OLD_NUM_PAT <- "Supplementary Data (1[3-9]|2[0-7])\\b"
 count_old <- function(d) sum(vapply(d, function(v) if (is.character(v)) sum(grepl(OLD_NUM_PAT, v, perl = TRUE)) else 0L, numeric(1)))
 
 hs <- createStyle(textDecoration = "bold")
@@ -582,6 +740,13 @@ load_st <- function(id) {
       ptr("ST23", sprintf("(7 columns + sheets %s)", paste(sd_sheets_of("ST23")[-1], collapse = ", ")), "Visium program expression per spatial domain: per-domain mean and median program UMI per 10,000 per condition (Fig. 6e), the per-gene band means and log2 NHD/control ratios of the Fig. 6d heatmap, and the gene membership of every program scored on tissue; copies of the panel tables."),
       ptr("ST24", sprintf("(11 columns + sheet %s)", sd_sheets_of("ST24")[2]), "Program-level Cliff's delta, Wilcoxon p, BH q (within panel), effect gate and q* mark per program x cell type x region for Figs. 2d, 3e, 4d and 5d, long form and with both regions side by side; copies of the panel tables."),
       ptr("ST18", "(six sheets A-F)", "Sequencing-depth diagnostics; each sheet has its own schema, documented in the README sheet of its workbook."),
+      ptr("ST25", sprintf("(%d columns)", nrow(ST25_COLS)), "Compensatory secretory routes of Fig. 2c: per-gene detection in control and NHD microglia, raw and depth-adjusted, with the route and the detection floor."),
+      ptr("ST26", sprintf("(%d columns)", nrow(ST26_COLS)), "CellChat pathway totals behind the chords of Figs. 3g, 3h and 5e: summed communication probability per sender, receiver and pathway, with its share of that panel, region and condition."),
+      ptr("ST27", sprintf("(%d columns)", nrow(ST27_COLS)), "Microglial ligand to glial receptor communication probabilities behind Fig. 3g and Fig. 4j, with the CellChat permutation P values and their BH adjustment."),
+      ptr("ST28", sprintf("(%d columns)", nrow(ST28_COLS)), "Astrocytic ligand to neuronal receptor communication probabilities behind Fig. 3h, with the raw-count detection of each receptor in the receiving class."),
+      ptr("ST29", sprintf("(%d columns)", nrow(ST29_COLS)), "Microglial ligand to neuronal receptor communication probabilities behind Fig. 5e, per region and neuronal class."),
+      ptr("ST30", sprintf("(%d columns)", nrow(ST30_COLS)), "The Fig. 5e receptors resolved by neuronal subtype (Fig. 5g): mean expression and detection per subtype, region and condition."),
+      ptr("ST31", sprintf("(%d columns)", nrow(ST31_COLS)), "Oligodendrocyte state composition behind Fig. 4h: nuclei and fraction per state, region and condition."),
       fill = TRUE)
     .pub <- d$table %in% names(TITLE_PUBLIC)
     d[.pub, table_title := unname(TITLE_PUBLIC[table])]
@@ -698,7 +863,7 @@ for (n in SD_WB$workbook) {
   }
   # guard: no pre-consolidation number in the README or in any data sheet of this workbook
   .old <- count_old(res$readme[, .(c1, c2, c3, c4)]) + sum(vapply(unlist(res$tables, recursive = FALSE), count_old, numeric(1)))
-  stopifnot("a pre-consolidation 'Supplementary Data 12-27' citation survives in this workbook" = .old == 0)
+  stopifnot("a pre-consolidation 'Supplementary Data 13-27' citation survives in this workbook" = .old == 0)
 }
 index <- rbindlist(index)
 stopifnot(nrow(index) == nrow(SD_SHEETS), identical(paste(index$number, index$sheet), paste(SD_SHEETS$workbook, SD_SHEETS$sheet)))
@@ -714,7 +879,7 @@ if (length(REKEY_LOG)) {
 .dict_out <- built[[1]]$tables[["ST0"]][["Data"]]
 stopifnot("old numbers survive in the packaged dictionary" = count_old(.dict_out) == 0,
           "old numbers survive in a README" = sum(vapply(built, function(b) count_old(b$readme[, .(c1, c2, c3, c4)]), numeric(1))) == 0)
-say("guard: 'Supplementary Data 12-27' occurs 0 times in the dictionary and in the %d READMEs", length(built))
+say("guard: 'Supplementary Data 13-27' occurs 0 times in the dictionary and in the %d READMEs", length(built))
 
 # ---- rename map + find/replace list for the Word draft ----------------------
 map <- as.data.table(sd_rename_map())

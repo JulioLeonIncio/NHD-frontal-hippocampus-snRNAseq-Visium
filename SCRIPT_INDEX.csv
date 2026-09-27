@@ -106,6 +106,7 @@ scripts,123_visium_L4IT_signal_vs_order_FH.R,123,"Diagnostic: is layer IV missin
 scripts,125_visium_domain_annotation_table_FH.R,125,"Supplementary Data 11, sheets Spot_annotation + Layer_IV_order (internal ST22): the per-spot Visium"
 scripts,126_visium_program_tables_FH.R,126,"Supplementary Data 11, sheets Programs_per_domain / Genes_by_band / Gene_sets_Visium (internal ST23): the Visium program expression"
 scripts,127_program_delta_table_FH.R,127,"Supplementary Data 7, sheets Program_deltas + By_program (internal ST24): program-level Cliff's delta, NHD versus"
+scripts,132_supp_data_12_communication_FH.R,132,"Source data for the cell-cell communication and composition panels, which no other Supplementary Data workbook carries:"
 scripts,_ST0_data_dictionary_FH.R,,"_ST0_data_dictionary_FH.R Authored content for ST0, the supplementary-table data dictionary."
 scripts,_artifact_genes.R,,Ambient / artifact gene filter
 scripts,_astro_inline_sets_FH.R,,"Single source for the astrocyte-state gene sets that Figure 3e,f scores but that do not live in data/curated_signatures.rds."

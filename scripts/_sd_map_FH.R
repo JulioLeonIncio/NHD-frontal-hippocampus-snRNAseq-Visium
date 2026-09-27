@@ -18,7 +18,7 @@
 
 # ---- workbooks: number -> short name + one-sentence referee-facing title ------------------------
 SD_WB <- data.frame(stringsAsFactors = FALSE,
-  workbook = 1:11,
+  workbook = 1:12,
   name = c("Data dictionary",
            "Samples, nuclei and annotation",
            "Per-nucleus differential expression",
@@ -29,7 +29,8 @@ SD_WB <- data.frame(stringsAsFactors = FALSE,
            "Microglia: transcription-factor activity and myeloid pooling",
            "Cross-cohort contrast with Zhou et al. 2023",
            "Sequencing-depth diagnostics",
-           "Visium spatial transcriptomics"),
+           "Visium spatial transcriptomics",
+           "Cell-cell communication and composition source data"),
   title = c(
     "Data dictionary: the columns of every sheet of every Supplementary Data workbook, with the workbook, sheet, figures backed and source script of each table, and the analysis-wide conventions.",
     "Samples, nuclei and annotation: per-library sequencing and quality-control metrics, post-QC nucleus counts per cell type, region and condition, frontal cortical neuron subclass counts, hippocampal neuron subtype assignment per nucleus, and the myeloid nucleus selection chain.",
@@ -41,7 +42,8 @@ SD_WB <- data.frame(stringsAsFactors = FALSE,
     "Microglia: myeloid transcription-factor activity on the CollecTRI regulon behind Fig. 2h, with the admission gate and the down-sampling sensitivity arm, and the pooled Micro-PVM versus microglia-only comparison for eight activation genes.",
     "Cross-cohort contrast with Zhou et al. 2023: direction consistency per cell type and region against the empirical chance baseline, and the same statistic recomputed per Zhou NHD donor arm with and without the shared donor.",
     "Sequencing-depth diagnostics: per-compartment depth ratios, UMI-floor sweep, depth-only artifact by normalization, neuronal-program depth artifact and myeloid depth comparison (six sheets, A-F).",
-    "Visium spatial transcriptomics: the spatial-domain annotation of every spot with the layer IV order statistics, program expression per domain and the per-gene band means of the Fig. 6d heatmap with the gene sets scored on tissue, the microglia-rich versus microglia-poor spot contrasts, and the cell2location composition of every domain."))
+    "Visium spatial transcriptomics: the spatial-domain annotation of every spot with the layer IV order statistics, program expression per domain and the per-gene band means of the Fig. 6d heatmap with the gene sets scored on tissue, the microglia-rich versus microglia-poor spot contrasts, and the cell2location composition of every domain.",
+    "Source data for the cell-cell communication and composition panels: the compensatory secretory routes of Fig. 2c, the CellChat pathway totals behind the chords of Figs. 3g, 3h and 5e, the ligand-receptor probabilities behind Figs. 3g, 3h, 4j, 5e and 5g, and the oligodendrocyte state composition of Fig. 4h."))
 
 # ---- sheets: one row per data sheet, in shipping order --------------------------------------------
 # key   = the sheet's id (the former table id; sub-sheets of a former multi-sheet table carry its id + suffix)
@@ -82,7 +84,14 @@ SD_SHEETS <- data.frame(stringsAsFactors = FALSE, rbind(
   c("ST23b", "ST23",  11, "Genes_by_band",             26),
   c("ST23c", "ST23",  11, "Gene_sets_Visium",          26),
   c("ST20",  "ST20",  11, "Microglia_proximity",       23),
-  c("ST21",  "ST21",  11, "Composition_per_domain",    24)))
+  c("ST21",  "ST21",  11, "Composition_per_domain",    24),
+  c("ST25",  "ST25",  12, "Compensatory_routes",       NA),
+  c("ST26",  "ST26",  12, "Chord_pathway_totals",      NA),
+  c("ST27",  "ST27",  12, "LR_microglia_to_glia",      NA),
+  c("ST28",  "ST28",  12, "LR_astrocyte_to_neuron",    NA),
+  c("ST29",  "ST29",  12, "LR_microglia_to_neuron",    NA),
+  c("ST30",  "ST30",  12, "LR_microglia_to_neuron_subtype", NA),
+  c("ST31",  "ST31",  12, "Oligo_state_composition",   NA)))
 names(SD_SHEETS) <- c("key", "st", "workbook", "sheet", "old_number")
 SD_SHEETS$workbook   <- as.integer(SD_SHEETS$workbook)
 SD_SHEETS$old_number <- as.integer(SD_SHEETS$old_number)
@@ -91,12 +100,23 @@ SD_SHEETS$old_number <- as.integer(SD_SHEETS$old_number)
 SD_DROPPED <- data.frame(stringsAsFactors = FALSE, st = c("ST4", "ST5"), old_number = c(5L, 6L),
                          where = "code release, reference_tables/ (not a Supplementary Data file)")
 
+# They have no old_number: they never shipped under the 27-file numbering, so sd_rekey_old() must not
+# map anything onto them and they are excluded from the SD_OLD_ORDER identities below.
+SD_NEW <- c("ST25","ST26","ST27","ST28","ST29","ST30","ST31")
+
 # ---- the pre-consolidation order (old_number = position), still needed for the rename map -----------
 SD_OLD_ORDER <- c("ST0","ST1","ST2","ST3","ST4","ST5","ST6","ST7","ST8","ST9","ST10","ST11",
                   "ST12","ST13","ST14","ST15","ST15b","ST16","ST17","ST17b","ST18","ST19","ST20","ST21","ST22","ST23","ST24")
 
 # ---- referee-facing titles of the former tables (the "what this sheet holds" line of every README block) ----
 SD_TITLE_PUBLIC <- c(
+  ST25  = "Compensatory secretory routes of Fig. 2c: per-gene control and NHD expression with the fitted route and the detection floor.",
+  ST26  = "CellChat pathway totals behind the chord diagrams of Figs. 3g, 3h and 5e: summed communication probability per sender, receiver and pathway, with its share of that region and condition.",
+  ST27  = "Microglial ligand to glial receptor communication probabilities behind Fig. 3g (astrocytes) and Fig. 4j (oligodendrocyte lineage), per region.",
+  ST28  = "Astrocytic ligand to neuronal receptor communication probabilities behind Fig. 3h, with the raw-count detection of each receptor.",
+  ST29  = "Microglial ligand to neuronal receptor communication probabilities behind Fig. 5e, per region and neuronal class.",
+  ST30  = "The Fig. 5e pairs resolved by neuronal subtype (Fig. 5g): mean expression and detection of each receptor per subtype, region and condition.",
+  ST31  = "Oligodendrocyte state composition behind Fig. 4h: nuclei and fraction per state, region and condition.",
   ST0   = "Data dictionary: the columns of every sheet of every Supplementary Data workbook and the analysis-wide conventions.",
   ST1   = "Per-nucleus MAST differential expression, NHD versus control, per cell type and region and per frontal neuronal subclass.",
   ST2   = "Pseudobulk DESeq2 differential expression per cell type and region (confirmatory tier; hippocampal P values withheld).",
@@ -186,10 +206,13 @@ sd_rename_map <- function() {
 }
 
 # sd_rekey_old(text): rewrite the unambiguous pre-consolidation citations inside free text —
-# "Supplementary Data N" with N in 12-27 (singles, lists "23, 26", ranges "16-18"/"16–18", "and") and every
-# "Supplementary Table N" form — to the new workbook/sheet citation. Numbers 1-11 are not touched: they exist in
+# "Supplementary Data N" with N in 13-27 (singles, lists "23, 26", ranges "16-18"/"16–18", "and") and every
+# "Supplementary Table N" form — to the new workbook/sheet citation. Numbers 1-12 are not touched: they exist in
 # both numberings, so a bare "Supplementary Data 3" cannot be told apart; the source
 # text must render those through sd_ref(). Returns the text with attribute "n_rekeyed" = citations rewritten.
+# now names a real workbook, and re-keying it as the old table 12 would have silently turned every citation of
+# the new communication workbook into "Supplementary Data 2, sheet Hippocampal_subtypes". No source text cites the old
+# table 12, so nothing is lost by narrowing the range.
 sd_rekey_old <- function(text) {
   n <- 0L
   old_to_st <- function(num) { num <- sub("b$", "", num); SD_OLD_ORDER[as.integer(num)] }
@@ -214,7 +237,7 @@ sd_rekey_old <- function(text) {
     for (j in rev(seq_along(starts))) {          # right-to-left so earlier offsets stay valid
       tok  <- substr(text[k], starts[j], starts[j] + lens[j] - 1L)
       nums <- expand(sub("^Supplementary Data ", "", tok))
-      if (!all(nums >= 12L & nums <= 27L) || external(k, starts[j])) next
+      if (!all(nums >= 13L & nums <= 27L) || external(k, starts[j])) next
       new  <- render(SD_OLD_ORDER[nums]); n <- n + 1L
       text[k] <- paste0(substr(text[k], 1L, starts[j] - 1L), new, substr(text[k], starts[j] + lens[j], nchar(text[k])))
     }
@@ -238,14 +261,15 @@ sd_rekey_old <- function(text) {
 }
 
 # ---- structure asserts (the map is load-bearing for every citation in the manuscript) ---------------
-stopifnot(nrow(SD_WB) == 11L, identical(SD_WB$workbook, 1:11), !anyDuplicated(SD_WB$name),
+stopifnot(nrow(SD_WB) == 12L, identical(SD_WB$workbook, 1:12), !anyDuplicated(SD_WB$name),
           all(nchar(SD_SHEETS$sheet) <= 31L),                                       # Excel sheet-name limit
           !grepl("[][*?:/\\\\]", paste(SD_SHEETS$sheet, collapse = "")),           # characters Excel forbids in sheet names
           !anyDuplicated(paste(SD_SHEETS$workbook, SD_SHEETS$sheet)),              # unique within a workbook
           !anyDuplicated(SD_SHEETS$key),
-          setequal(unique(SD_SHEETS$workbook), 1:11),
-          setequal(c(unique(SD_SHEETS$st), SD_DROPPED$st), SD_OLD_ORDER),         # every former table is placed or dropped
-          setequal(names(SD_TITLE_PUBLIC), SD_OLD_ORDER),
+          setequal(unique(SD_SHEETS$workbook), 1:12),
+          setequal(c(setdiff(unique(SD_SHEETS$st), SD_NEW), SD_DROPPED$st), SD_OLD_ORDER),   # every former table is placed or dropped
+          all(SD_NEW %in% SD_SHEETS$st), all(is.na(SD_SHEETS$old_number[SD_SHEETS$st %in% SD_NEW])),
+          setequal(names(SD_TITLE_PUBLIC), c(SD_OLD_ORDER, SD_NEW)),
           sd_workbook_of("ST0") == 1L, sd_workbook_of("ST12") == 2L, sd_workbook_of("ST1") == 3L, sd_workbook_of("ST2") == 4L,
           sd_workbook_of("ST3") == 5L, sd_workbook_of("ST6") == 6L, sd_workbook_of("ST24") == 7L, sd_workbook_of("ST14") == 8L,
           sd_workbook_of("ST13") == 9L, sd_workbook_of("ST18") == 10L, sd_workbook_of("ST22") == 11L,
