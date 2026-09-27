@@ -226,14 +226,16 @@ dat <- dat %>%
          dir_match = !is.na(theme) &
                      ((theme_dir == "lost" & avg_log2FC < -LFC_MIN) |
                       (theme_dir == "up"   & avg_log2FC >  LFC_MIN)),
-         # The GATE is computed and reported, but not applied to in_prog — deliberately.
-         # Applying it empties an entire panel: Neuron_Inh/Frontal has zero of its 1,322
-         # significant genes moving the expected way above the fold-change floor (Ex has
-         # 29). That is a real finding about how much weaker the interneuron effect is,
-         # but a blank facet is not the way to show it — it belongs in the text and in
-         # the dot-matrix, which reports effect size directly. The 22 against-direction
-         # genes are logged above so the discordance is documented, not hidden.
-         in_prog = !is.na(theme) & !artifact,
+         # The GATE is now applied, as it already is in
+         # the sibling astrocyte and oligodendrocyte volcanoes. Before this, the five labelled genes
+         # of Neuron_Inh/Frontal — SLC6A1 +0.97, MAFB +0.72, ADARB2 +0.40, ERBB4 +0.17, TNR +0.11 —
+         # all moved up yet were drawn in the hues of programmes named "(lost)", which reads as
+         # support for a loss that the genes contradict. Applying the gate empties the COLOURED
+         # layer of that facet (its significant genes remain, in grey), and that emptiness is the
+         # finding: no interneuron programme gene moves the expected way above the fold-change
+         # floor. An in-panel note is added below so an empty coloured layer cannot be mistaken for
+         # a rendering failure. The against-direction genes stay logged.
+         in_prog = !is.na(theme) & !artifact & dir_match,
          tier = case_when(
            in_prog & p_val_adj < PADJ_CUT & abs(cliffs_delta) >= CD_CUT ~ "strict",
            in_prog & p_val_adj < PADJ_CUT                               ~ "nominal",
@@ -356,9 +358,17 @@ build_volcano <- function(ct) {
     geom_hline(yintercept = -log10(PADJ_CUT), linetype = "dashed", colour = "grey60", linewidth = 0.35) +
     geom_vline(xintercept = 0, colour = "grey80", linewidth = 0.25, linetype = "22") +
     geom_point(data = df_ns, aes(avg_log2FC, y_disp), colour = "#949494", size = 0.5, alpha = 0.5, shape = 16, stroke = 0) +
-    geom_point(data = df_nom, aes(avg_log2FC, y_disp, colour = programme), size = 0.9, alpha = 0.5, shape = 16, stroke = 0) +
-    geom_point(data = df_str, aes(avg_log2FC, y_disp, colour = programme), size = 2.6, alpha = 0.95, shape = 16, stroke = 0) +
+    # Built conditionally for the same reason the label layer is — with the direction
+    # gate applied, a class can have no programme gene moving the expected way (Neuron_Inh), and
+    # ggh4x's facet_grid2(independent = "y") calls vec_group_loc() on an empty layer and dies with
+    # "Input must be a vector, not NULL" at print() time, far from the cause.
+    (if (nrow(df_nom)) geom_point(data = df_nom, aes(avg_log2FC, y_disp, colour = programme), size = 0.9, alpha = 0.5, shape = 16, stroke = 0)) +
+    (if (nrow(df_str)) geom_point(data = df_str, aes(avg_log2FC, y_disp, colour = programme), size = 2.6, alpha = 0.95, shape = 16, stroke = 0)) +
     lab_layer +
+    # No in-panel note here: the house rule is that caption text never goes in a panel
+    # [[no-captions-in-panels]]. Where the gate empties a facet's coloured layer, the legend says
+    # so — "no interneuron programme gene moves in its expected direction above the fold-change
+    # floor in prefrontal cortex" — which is the finding, not a rendering failure.
     # the right-hand class strip duplicated the new column header and cost width, so the
     # facet is now region-only; the header names the class
     facet_grid2(. ~ region, scales = "free_y", independent = "y",
@@ -460,7 +470,7 @@ cat("script   : scripts/F5b_neuron_volcano_grid_MAST_FH.R\n")
 cat("input    :", MAST_PATH, "\n")
 cat("filter   : cell_type in {Neuron_Ex, Neuron_Inh}, region in {Frontal,Hippo}\n")
 cat("calling  : TWO-TIER by size — colour if padj<0.05 (nominal, small); LARGE if also |Cliff's delta|>=0.15 (strict).\n")
-cat("Ex themes (== 4C modules): Presynaptic(SNARE)/Postsynaptic(PSD)/Ionotropic GluR/OXPHOS-ETC (NHD-axis DROPPED 2026-07-13)\n")
+cat("Ex themes (== 4C modules): Presynaptic(SNARE)/Postsynaptic(PSD)/Ionotropic GluR/OXPHOS-ETC\n")
 cat("Inh themes: GABAergic/IN TF/IN subclass/PV fast-spiking/Perineuronal net-ECM\n")
 cat(sprintf("padj underflow floored (<= %.3g): %d ; display cap -log10(p) = %d ; capped points: %d\n",
             PADJ_FLOOR, n_underflow, YCAP, sum(dat$capped)))

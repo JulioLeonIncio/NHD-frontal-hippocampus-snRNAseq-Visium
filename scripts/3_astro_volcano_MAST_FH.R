@@ -65,7 +65,7 @@ LFC_MIN <- log2(FC_MIN)
 CD_CUT   <- 0.15
 PADJ_CUT <- 0.05
 
-# --- themed astrocyte programs (FH-revalidated; see header) ------------------
+# --- themed astrocyte programs (validated here; see header) ------------------
 ASTRO_THEME <- c(
   # Up: reactive / DAA
   GFAP="Reactive / DAA", CD44="Reactive / DAA", TNC="Reactive / DAA",

@@ -13,7 +13,7 @@
 # FH data source: withNeurons_v2 CellChat objects (major-class Neuron_Ex/Inh
 # targets — a direct Neuron_Ex->Ex / Neuron_Inh->Inh rename; no subtype roll-up).
 #
-# Critical gotcha: keyed by interaction_name_2 (ligand-RECEPTOR), not pathway_name.
+# Note: keyed by interaction_name_2 (ligand-RECEPTOR), not pathway_name.
 # No causal verbs; the delta is the effect size.
 #
 # Output: figures/Figure_5/panels/4G_astro_neuron_LR.{pdf,png} + stats CSV.
@@ -54,6 +54,19 @@ LR_WHITELIST <- c(
   "NRXN1 - NLGN1", "NRXN1 - LRRTM4", "NRXN1 - CLSTN1",
   "NCAM1 - NCAM1",
   "CADM1 - CADM1", "CADM1 - NECTIN3")
+# The ASTROCYTIC ligand is now held to the same ambient rule the volcanoes use.
+# NRXN1 and NRG3 are on ARTIFACT_NEURONAL and are flagged artifact = TRUE for astrocytes in ST1
+# (NRXN1 frontal pct 96.9/99.1, hippocampus 53.5/98.7 — the soup pattern), so a pair whose sender
+# side is ambient cannot support an astrocyte-to-neuron claim however well its receptor behaves.
+# This drops NRXN1-NLGN1, NRXN1-CLSTN1, NRXN1-LRRTM4 and NRG3-ERBB4, leaving NCAM1-NCAM1,
+# CADM1-CADM1, CADM1-NECTIN3 and NRG2-ERBB4. The "13 of 14 pairs retained" count goes with them.
+source(file.path(PROJ, "scripts", "_artifact_genes.R"))
+.lig <- trimws(sub("\\s-\\s.*$", "", LR_WHITELIST))
+.drop_lig <- is_artifact(.lig, "Astro")
+if (any(.drop_lig)) cat(sprintf("ambient-ligand pairs dropped from Fig. 3h: %s\n",
+                                paste(LR_WHITELIST[.drop_lig], collapse = ", ")))
+LR_WHITELIST <- LR_WHITELIST[!.drop_lig]
+stopifnot("every whitelist pair was dropped as ambient" = length(LR_WHITELIST) > 0)
 
 load_region <- function(region) {
   path <- file.path(CC, sprintf("merged_NHDvsCON_%s_withNeurons_v2.rds", region))
@@ -146,8 +159,25 @@ bubble <- bubble %>%
   }))))
 bubble <- bubble %>%
   mutate(receptor = trimws(sub("^.*\\s-\\s", "", as.character(interaction_name_2)))) %>%
-  left_join(.rec_tab, by = c("Region", "class", "receptor")) %>%
-  mutate(rec_undetected = is.na(rec_delta))
+  left_join(.rec_tab, by = c("Region", "class", "receptor"))
+# The cross means "below the 10 % detection floor", so it is computed from
+# detection on raw counts, not from absence in the MAST table. MAST is run with min.pct = 0.1 and
+# logfc.threshold = 0.1, so a missing row is either undetectable or stable — and the stable case is
+# evidence for preserved input, which this panel was drawing as missing data.
+source(file.path(PROJ, "scripts", "_receptor_detection_FH.R"))
+.det <- receptor_detection(PROJ, file.path(PROJ, "atlas", "NHD_FH_harmony.rds"),
+                           genes = unique(bubble$receptor),
+                           classes = c("Neuron_Ex", "Neuron_Inh"), regions = REGIONS)
+bubble <- bubble %>% mutate(
+  rec_pct_max = .det$pct_max[match(paste(receptor, paste0("Neuron_", class), Region),
+                                   paste(.det$gene, .det$class, .det$region))],
+  rec_undetected = is.na(rec_pct_max) | rec_pct_max < 0.10,
+  rec_stable     = !rec_undetected & is.na(rec_delta),   # detected, |log2FC| < 0.1 -> no MAST row
+  rec_disc       = !is.na(rec_disc) & rec_disc)         # a stable receptor is not a discovery hit
+cat(sprintf("receptor detection: %d of %d cells below the 10 %% floor; %d detected but stable: %s\n",
+            sum(bubble$rec_undetected), nrow(bubble), sum(bubble$rec_stable),
+            paste(unique(sprintf("%s/%s/%s %.0f%%", bubble$receptor[bubble$rec_stable], bubble$class[bubble$rec_stable],
+                                 bubble$Region[bubble$rec_stable], 100 * bubble$rec_pct_max[bubble$rec_stable])), collapse = ", ")))
 .all_nd <- bubble %>% group_by(interaction_name_2) %>%
   summarise(all_nd = all(rec_undetected), .groups = "drop")
 .drop <- .all_nd$interaction_name_2[.all_nd$all_nd]
@@ -161,7 +191,7 @@ cat(sprintf("receptor gate: %d cross(es) [%s] | %d ring(s) for receptor DOWN at 
             sum(bubble$rec_undetected),
             paste(unique(paste0(bubble$receptor[bubble$rec_undetected], "/",
                                 bubble$class[bubble$rec_undetected])), collapse = ", "),
-            sum(!bubble$rec_undetected & bubble$rec_disc & bubble$rec_delta < 0)))
+            sum(!bubble$rec_undetected & bubble$rec_disc & bubble$rec_delta < 0, na.rm = TRUE)))
 
 y_order <- bubble %>% group_by(interaction_name_2) %>%
   summarise(net_delta = sum(delta, na.rm = TRUE), .groups = "drop") %>%

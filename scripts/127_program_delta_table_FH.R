@@ -66,7 +66,9 @@ CT_LEV     <- c("Micro-PVM", "Astro", "Oligo", "OPC", "Neuron_Ex", "Neuron_Inh")
 # panel display labels of the Fig. 5d y axis (4C2 MOD_LAB / ORD); the CSV keys are the ST7 / ST6 "Fig5d_<key>" names
 NEURON_LAB <- c(Presynaptic = "Presynaptic (SNARE)", Postsynaptic = "Postsynaptic (PSD)",
                 GluR_ionotropic = "Ionotropic GluR", OxPhos = "OxPhos", IEG = "IEG")
-DATA_COLS <- c("figure_panel", "cell_type", "program", "region", "n_CON", "n_NHD", "cliffs_delta", "p_wilcox", "q_BH", "effect_gate", "q_star")
+DATA_COLS <- c("figure_panel", "cell_type", "program", "region", "n_CON", "n_NHD", "cliffs_delta", "p_wilcox", "q_BH", "effect_gate", "q_star",
+               # A module score is returned even when its members are undetected.
+               "n_genes_detected", "n_genes_in_set", "plotted")
 
 # the panel mark columns hold "q*" or ""; an all-empty column (Fig. 2d) is typed logical NA by fread, so both are read as
 # character and NA / "" = no mark (any other token is an error, never silently "no mark")
@@ -85,40 +87,74 @@ DATA_COLS <- c("figure_panel", "cell_type", "program", "region", "n_CON", "n_NHD
 # ---- Fig. 2d microglia (2B) --------------------------------------------------
 cat("== Fig. 2d microglia (2B) ==\n")
 mi <- fread(F_MI, colClasses = list(character = "star"))
-stopifnot("fig2 micro table columns differ from 2B" = identical(names(mi), c("program", "Region", "p_wilcox", "cliff_d", "y_star", "y_min", "y_max", "q_BH", "passes", "star", "delta_lab", "y_top", "y_delta")),
-          nrow(mi) == 14L, is.logical(mi$passes))
+stopifnot("fig2 micro table columns differ from 2B" = identical(names(mi), c("program", "Region", "p_wilcox", "cliff_d", "y_star", "y_min", "y_max", "q_BH", "passes", "star", "delta_lab", "y_top", "y_delta", "n_in_set", "n_det10", "scorable")),   # 2B now ships the detection gate
+          nrow(mi) == 14L, is.logical(mi$passes), is.logical(mi$scorable))
 b_mi <- .block("Fig. 2d", "Micro-PVM", mi$program, mi$Region, NA_integer_, NA_integer_, mi$cliff_d, mi$p_wilcox, mi$q_BH,
                mi$passes, .is_qstar(mi$star), unique(mi$program))     # 2B writes its rows in PROG_ORDER; n per group is not in the table
+# Fig. 2d carries its detection basis too, so no panel of ST24 ships blank gate columns.
+# All 14 cells pass (every member of all seven programs is detected in >= 10 % of that region's
+# microglia), so the panel itself is unchanged; the columns record that it was measured, not assumed.
+.idx_mi <- match(paste(b_mi$program, b_mi$region), paste(mi$program, .norm_region(mi$Region)))
+b_mi[, `:=`(n_genes_detected = mi$n_det10[.idx_mi], n_genes_in_set = mi$n_in_set[.idx_mi], plotted = mi$scorable[.idx_mi])]
+cat(sprintf("Fig. 2d: %d of %d cells plotted%s\n", sum(b_mi$plotted), nrow(b_mi),
+            if (all(b_mi$plotted)) " (every program fully detected)" else
+              sprintf("; not plotted: %s", paste(b_mi$program[!b_mi$plotted], collapse = ", "))))
 
 # ---- Fig. 3e astrocytes (3D) -------------------------------------------------
 cat("== Fig. 3e astrocytes (3D) ==\n")
 as <- fread(F_AS, colClasses = list(character = "star"))
-stopifnot("fig3d astro table columns differ from 3D" = identical(names(as), c("signature", "Region", "n_CON", "n_NHD", "med_CON", "med_NHD", "p_wilcox", "cliff_d", "q_BH", "abs_d", "passes_effect", "star")),
+stopifnot("fig3d astro table columns differ from 3D" = identical(names(as), c("signature", "Region", "n_CON", "n_NHD", "med_CON", "med_NHD", "p_wilcox", "cliff_d", "q_BH", "abs_d", "passes_effect", "star", "n_in_set", "n_present", "n_det10", "scorable")),   # 3D now ships the detection gate
           nrow(as) == 22L, is.logical(as$passes_effect), isTRUE(all.equal(as$abs_d, abs(as$cliff_d))))
 b_as <- .block("Fig. 3e", "Astro", as$signature, as$Region, as$n_CON, as$n_NHD, as$cliff_d, as$p_wilcox, as$q_BH,
                as$passes_effect, .is_qstar(as$star), unique(as$signature))   # 3D writes ALL_SIG_ORDER
+# The astrocyte rows carry their detection basis, so a reader can see why two of the
+# eleven sets are computed but not plotted (a module score whose members are undetected still
+# returns a value, and a rank-based delta then reports separation on a ~0.02-unit shift).
+b_as[, `:=`(n_genes_detected = as$n_det10[match(paste(program, region), paste(as$signature, .norm_region(as$Region)))],
+            n_genes_in_set   = as$n_present[match(paste(program, region), paste(as$signature, .norm_region(as$Region)))])]
+b_as[, plotted := n_genes_detected >= 3L]
+cat(sprintf("Fig. 3e: %d of %d cells plotted; not plotted (< 3 members detected at >= 10 %%): %s\n",
+            sum(b_as$plotted), nrow(b_as), paste(sprintf("%s/%s (%d of %d)", b_as$program[!b_as$plotted],
+            b_as$region[!b_as$plotted], b_as$n_genes_detected[!b_as$plotted], b_as$n_genes_in_set[!b_as$plotted]), collapse = "; ")))
 
 # ---- Fig. 4d oligodendrocyte lineage (3Fp) -----------------------------------
 cat("== Fig. 4d oligodendrocyte lineage (3Fp) ==\n")
 ol <- fread(F_OL, colClasses = list(character = "label"))
-stopifnot("oligo lineage table columns differ from 3Fp" = identical(names(ol), c("signature", "Region", "lineage", "p", "q_BH", "cliff_d", "cliff_d_depth_matched", "ratio_depth_matched", "n_depth_matched", "passes", "label", "n_CON", "n_NHD")),
+stopifnot("oligo lineage table columns differ from 3Fp" = identical(names(ol), c("signature", "Region", "lineage", "p", "q_BH", "cliff_d", "cliff_d_depth_matched", "ratio_depth_matched", "n_depth_matched", "passes", "label", "n_CON", "n_NHD", "n_present", "n_det10", "scorable")),   # 3Fp ships the per-lineage detection gate
           nrow(ol) == 32L, is.logical(ol$passes), setequal(unique(ol$lineage), c("Oligodendrocyte", "OPC")))
 # The panel plots cliff_d (all nuclei); cliff_d_depth_matched is the 3Fp sensitivity arm and is not shipped here
 b_ol <- .block("Fig. 4d", c(Oligodendrocyte = "Oligo", OPC = "OPC")[ol$lineage], ol$signature, ol$Region, ol$n_CON, ol$n_NHD, ol$cliff_d, ol$p, ol$q_BH,
                ol$passes, .is_qstar(ol$label), unique(ol$signature))          # 3Fp writes oligo_programme_order()
+# The oligodendrocyte-lineage rows carry their detection basis per lineage and region
+# (the sets were audited in oligodendrocytes only; the OPC cells that are not measurable there are not plotted)
+.key_ol <- paste(ol$signature, .norm_region(ol$Region), c(Oligodendrocyte = "Oligo", OPC = "OPC")[ol$lineage])
+.idx_ol <- match(paste(b_ol$program, b_ol$region, b_ol$cell_type), .key_ol)
+b_ol[, `:=`(n_genes_detected = ol$n_det10[.idx_ol], n_genes_in_set = ol$n_present[.idx_ol], plotted = ol$scorable[.idx_ol])]
+cat(sprintf("Fig. 4d: %d of %d cells plotted; not plotted: %s\n", sum(b_ol$plotted), nrow(b_ol),
+            paste(sprintf("%s/%s/%s (%d of %d)", b_ol$program[!b_ol$plotted], b_ol$cell_type[!b_ol$plotted],
+            b_ol$region[!b_ol$plotted], b_ol$n_genes_detected[!b_ol$plotted], b_ol$n_genes_in_set[!b_ol$plotted]), collapse = "; ")))
 
 # ---- Fig. 5d neurons (4C2) ---------------------------------------------------
 cat("== Fig. 5d neurons (4C2) ==\n")
 ne <- fread(F_NE, colClasses = list(character = "label"))
-stopifnot("fig5 neuron table columns differ from 4C2" = identical(names(ne), c("signature", "Region", "class", "p", "cliff_d", "n_CON", "n_NHD", "q_BH", "passes", "label", "dotsize")),
+stopifnot("fig5 neuron table columns differ from 4C2" = identical(names(ne), c("signature", "Region", "class", "p", "cliff_d", "n_CON", "n_NHD", "q_BH", "passes", "label", "dotsize", "n_in_set", "n_present", "n_det10", "scorable", "separable")),
           nrow(ne) == 20L, is.logical(ne$passes), setequal(unique(ne$class), c("Ex", "Inh")), setequal(unique(ne$signature), names(NEURON_LAB)))
 # 4C2's group_by() wrote the CSV in alphabetical key order; the panel's y axis is ORD (Presynaptic, Postsynaptic, GluR, OxPhos, IEG) — used here
 b_ne <- .block("Fig. 5d", c(Ex = "Neuron_Ex", Inh = "Neuron_Inh")[ne$class], unname(NEURON_LAB[ne$signature]), ne$Region, ne$n_CON, ne$n_NHD, ne$cliff_d, ne$p, ne$q_BH,
                ne$passes, .is_qstar(ne$label), unname(NEURON_LAB))
+# The neuron rows carry their detection basis per CLASS and region. The IEG set is
+# why this matters: 8 of its 14 members (FOS, FOSB, ARC, NPAS4, JUNB, EGR2, NR4A2, NR4A3) are below
+# the floor in frontal excitatory nuclei, so the score rests on HOMER1 and JUND.
+.key_ne <- paste(unname(NEURON_LAB[ne$signature]), .norm_region(ne$Region), c(Ex = "Neuron_Ex", Inh = "Neuron_Inh")[ne$class])
+.idx_ne <- match(paste(b_ne$program, b_ne$region, b_ne$cell_type), .key_ne)
+b_ne[, `:=`(n_genes_detected = ne$n_det10[.idx_ne], n_genes_in_set = ne$n_in_set[.idx_ne], plotted = ne$scorable[.idx_ne])]
+cat(sprintf("Fig. 5d: %d of %d cells plotted; not plotted: %s\n", sum(b_ne$plotted), nrow(b_ne),
+            paste(sprintf("%s/%s/%s (%d of %d)", b_ne$program[!b_ne$plotted], b_ne$cell_type[!b_ne$plotted],
+            b_ne$region[!b_ne$plotted], b_ne$n_genes_detected[!b_ne$plotted], b_ne$n_genes_in_set[!b_ne$plotted]), collapse = "; ")))
 
 # ---- stack, check, derive ----------------------------------------------------
 cat("== stack + checks ==\n")
-d <- rbindlist(list(b_mi, b_as, b_ol, b_ne))
+d <- rbindlist(list(b_mi, b_as, b_ol, b_ne), fill = TRUE)   # only the Fig. 3e block carries the detection columns
 d[, figure_panel := factor(figure_panel, PANEL_LEV)]; d[, cell_type := factor(cell_type, CT_LEV)]; d[, region := factor(region, REGION_LEV)]
 stopifnot(!anyNA(d$figure_panel), !anyNA(d$cell_type), !anyNA(d$region))
 setorder(d, figure_panel, cell_type, prog_ord, region)
@@ -156,7 +192,7 @@ stopifnot("expected 14 + 22 + 32 + 20 = 88 rows" = nrow(d) == 88L,
 .nchk <- d[!is.na(n_CON), .(k = uniqueN(paste(n_CON, n_NHD))), by = .(figure_panel, cell_type, region)]
 stopifnot("n_CON / n_NHD vary across programs within a panel x cell type x region" = all(.nchk$k == 1L))
 e <- d[, ..DATA_COLS]
-stopifnot(identical(names(e), DATA_COLS), ncol(e) == 11)
+stopifnot(identical(names(e), DATA_COLS), ncol(e) == 14)
 
 # ---- sheet By_program (wide): both regions side by side ----------------------
 cat("== sheet By_program ==\n")

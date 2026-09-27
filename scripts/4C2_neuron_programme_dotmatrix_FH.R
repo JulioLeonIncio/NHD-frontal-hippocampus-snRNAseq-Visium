@@ -59,6 +59,25 @@ MODS <- names(sigs)
 cat("modules:", paste(MODS, collapse = " | "), "\n")
 
 CLASS <- c(Neuron_Ex = "Ex", Neuron_Inh = "Inh")
+
+# Detection basis per CLASS and region, measured on raw counts (the same treatment
+# Fig. 3f and Fig. 4d now carry). The neuron scores are a mean of log-normalised counts, so an
+# undetected member contributes 0 rather than a random control bin — but a set can still be
+# carried by one or two abundant members while its canonical genes sit below the floor. The IEG
+# set is the case in point: 8 of its 14 members (FOS, FOSB, ARC, NPAS4, JUNB, EGR2, NR4A2, NR4A3)
+# are absent from the frontal excitatory universe, so the score rests on HOMER1 and JUND.
+source(file.path(PROJ, "scripts", "_receptor_detection_FH.R"))
+.det_n <- receptor_detection(PROJ, file.path(PROJ, "atlas", "NHD_FH_harmony.rds"),
+                             genes = unique(unlist(sigs)), classes = names(CLASS), regions = REGION_ORDER)
+det_tab <- do.call(rbind, lapply(names(sigs), function(nm) do.call(rbind, lapply(names(CLASS), function(ct)
+  do.call(rbind, lapply(REGION_ORDER, function(rg) {
+    i <- match(paste(sigs[[nm]], ct, rg), paste(.det_n$gene, .det_n$class, .det_n$region))
+    pc <- .det_n$pct_max[i]
+    data.frame(signature = nm, class = unname(CLASS[ct]), Region = rg,
+               n_in_set = length(sigs[[nm]]), n_present = sum(!is.na(pc)),
+               n_det10 = sum(!is.na(pc) & pc >= 0.10), stringsAsFactors = FALSE) }))))))
+cat("\ndetected members per programme x class x region (>= 10 % of nuclei in either condition):\n")
+print(det_tab[order(det_tab$signature, det_tab$class, det_tab$Region), ], row.names = FALSE)
 long <- sc %>%
   filter(cell_type %in% names(CLASS), Region %in% REGION_ORDER,
          Condition %in% c("CON","NHD")) %>%
@@ -94,6 +113,13 @@ if (n_uf) cat(sprintf("NOTE: %d q==0 underflows floored to xmin for the size sca
 MOD_LAB <- c(Presynaptic = "Presynaptic (SNARE)", Postsynaptic = "Postsynaptic (PSD)",
              GluR_ionotropic = "Ionotropic GluR", OxPhos = "OxPhos", IEG = "IEG")
 ORD <- intersect(c("Presynaptic","Postsynaptic","GluR_ionotropic","OxPhos","IEG"), MODS)
+# gate: >= 3 members detected, or >= 2 covering at least half the set (small sets)
+stat <- stat %>% left_join(det_tab, by = c("signature", "class", "Region")) %>%
+  mutate(scorable = !is.na(n_det10) & (n_det10 >= 3L | (n_det10 >= 2L & n_det10 / pmax(n_present, 1L) >= 0.5)))
+stopifnot("detection table does not cover every programme x class x region" = !any(is.na(stat$n_det10)))
+if (any(!stat$scorable)) cat(sprintf("\nNOT SCORABLE: %s\n", paste(sprintf("%s/%s/%s (%d of %d)",
+  stat$signature[!stat$scorable], stat$class[!stat$scorable], stat$Region[!stat$scorable],
+  stat$n_det10[!stat$scorable], stat$n_present[!stat$scorable]), collapse = "; ")))
 stat <- stat %>% mutate(signature = factor(signature, levels = ORD))
 
 cat("\n== Cliff's delta (NHD - CON) per programme x region x class ==\n")
@@ -102,12 +128,41 @@ print(as.data.frame(stat %>% arrange(signature, Region, class) %>%
       select(signature, Region, class, cliff_d, q_BH, label, n_CON, n_NHD)), row.names = FALSE)
 
 L <- max(ceiling(max(abs(stat$cliff_d), na.rm = TRUE)*20)/20, 0.15)
-dm <- stat %>% mutate(delta_c = pmax(pmin(cliff_d, L), -L))
+# The depth-artifact bound now covers every cell the panel draws (96 loops over both
+# neuron classes and includes the GluR set). A cell whose |delta| does not exceed the delta a
+# depth split of control nuclei alone produces is not separable from a depth artefact and is drawn
+# hollow — previously only 6 of 20 cells were controlled at all and the walk-back lived in the
+# legend. All ten inhibitory cells fail the bound, which is itself the finding.
+.dep <- tryCatch(read.csv(file.path(TDIR, "depth_E_neuron_module_artifact_FH.csv"), stringsAsFactors = FALSE),
+                 error = function(e) NULL)
+if (!is.null(.dep) && all(c("cell_type", "region", "programme", "separable") %in% names(.dep))) {
+  .ct <- c(Ex = "Neuron_Ex", Inh = "Neuron_Inh")
+  stat <- stat %>% mutate(separable = .dep$separable[match(paste(.ct[as.character(class)], Region, signature),
+                                                           paste(.dep$cell_type, .dep$region, .dep$programme))])
+  cat(sprintf("depth bound: %d of %d cells separable from a depth-only artefact; NOT separable: %s\n",
+              sum(stat$separable, na.rm = TRUE), nrow(stat),
+              paste(sprintf("%s/%s/%s", stat$signature[!stat$separable %in% TRUE],
+                            stat$class[!stat$separable %in% TRUE], stat$Region[!stat$separable %in% TRUE]), collapse = "; ")))
+} else { stat$separable <- NA; warning("depth bound table missing — no separability encoding") }
+
+dm <- stat %>% filter(scorable) %>%
+  mutate(delta_c = pmax(pmin(cliff_d, L), -L), fragile = !(separable %in% TRUE))
 GSEA_STEEL <- "#3E7CB1"; GSEA_ROSE <- "#D1495B"
-ylab_map <- setNames(str_wrap(unname(MOD_LAB[ORD]), width = 18), ORD)
+# the row label carries how many members are detected, so a row cannot be read as stronger than
+# its basis (five rows here, so the extra line fits — it did not in Fig. 4d's eight)
+.dl <- stat %>% dplyr::filter(scorable) %>% dplyr::group_by(signature) %>%   # describe the cells drawn, not the ones gated out
+  dplyr::summarise(k = min(n_det10), n = max(n_in_set), rng = dplyr::n_distinct(n_det10) > 1, .groups = "drop")
+.dl_k <- setNames(.dl$k, as.character(.dl$signature)); .dl_n <- setNames(.dl$n, as.character(.dl$signature))
+.dl_r <- setNames(.dl$rng, as.character(.dl$signature))
+ylab_map <- setNames(paste0(str_wrap(unname(MOD_LAB[ORD]), width = 18),
+                            sprintf("\n(%s%d of %d detected)", ifelse(.dl_r[ORD], "\u2265 ", ""), .dl_k[ORD], .dl_n[ORD])), ORD)
 
 p <- ggplot(dm, aes(x = class, y = signature)) +
-  geom_point(aes(fill = delta_c, size = dotsize), shape = 21, colour = "grey35", stroke = 0.3) +
+  geom_point(data = function(d) dplyr::filter(d, !fragile),
+             aes(fill = delta_c, size = dotsize), shape = 21, colour = "grey35", stroke = 0.3) +
+  # hollow = not separable from a depth-only artefact (see the bound joined above)
+  geom_point(data = function(d) dplyr::filter(d, fragile),
+             aes(size = dotsize), shape = 21, fill = NA, colour = "grey35", stroke = 0.45) +
   geom_text(data = dm %>% filter(label == "q*"),
             aes(x = class, y = signature, label = label), inherit.aes = FALSE,
             nudge_y = 0.30, size = 3.13, colour = "black") +

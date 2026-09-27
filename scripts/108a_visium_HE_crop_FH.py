@@ -21,7 +21,7 @@
 # Outputs (Visium/_HE_fullres/panels/):
 #   <section>_HE_fig6b_frame.png   the hires crop in Fig-6b orientation
 #   <section>_HE_for_annotation.png the same crop from the full-resolution tiff, native orientation,
-#                                   4,000 px long side (for Takao-sensei / Satoshi; lossless PNG)
+#                                   4,000 px long side (lossless PNG)
 #   HE_frames.json                  per section: map-coordinate extent of the crop, µm per map unit,
 #                                   scale-bar length in map units, fit residuals
 # Python environment: ctm_env (python_env_ctm_env.txt).

@@ -15,7 +15,7 @@
 # so no subtype roll-up is needed — the reference's Azimuth/Tippani collapse maps
 # are replaced by a direct Neuron_Ex->Ex / Neuron_Inh->Inh rename.
 #
-# Critical gotcha (project): CellChat pathway_name != ligand (GAS6's pathway is
+# Note: CellChat pathway_name != ligand (GAS6's pathway is
 # "GAS", ENTPD1's is "CD39", SEMA4D's is "SEMA4", GRN's is "GRN"). We select on
 # ligand and label ribbons at the ligand-receptor level so "GAS6" is not misread
 # as an abbreviation.

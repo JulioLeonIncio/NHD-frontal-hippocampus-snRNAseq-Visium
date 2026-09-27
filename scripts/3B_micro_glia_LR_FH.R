@@ -8,10 +8,10 @@
 # dot plot.  Reads the aggregated subsetCommunication output directly
 # (tables/cellchat_all_LR_pairs.csv) — atlas-light, no merged-object load.
 #
-# Critical gotcha: filter by ligand / interaction_name, not pathway_name (GAS6's
+# Note: filter by ligand / interaction_name, not pathway_name (GAS6's
 # pathway is "GAS", PROS1's is "PROS").
 #
-# FH re-validation of the curated pair whitelist
+# Validation of the curated pair whitelist
 # against tables/cellchat_all_LR_pairs.csv.  A pair is shown only if it is present
 # in the FH CellChat output for >=1 region/condition; each shown pair's per-region
 # CON/NHD prob + p + BH-q + dprob is written to fig3b_LR_stats.csv so exactly what
@@ -79,7 +79,7 @@ cat(sprintf("RECV_SET=%s -> receivers: %s\n", RECV_SET, paste(RECEIVERS, collaps
 REGIONS   <- c("Frontal","Hippo")
 FDR_ALPHA <- 0.05
 
-# Curated micro->glia programme pairs (FH-revalidated; PROS1->TAM added).
+# Curated micro->glia programme pairs (validated here; PROS1->TAM added).
 # interaction_name is the CellChat pair key.
 CURATED_LR <- c(
   "SPP1_CD44", "SPP1_ITGAV_ITGB5", "SPP1_ITGAV_ITGB1",
@@ -210,6 +210,29 @@ plot_df <- plot_df %>%
          rec_disc  = vapply(.rl, function(x) isTRUE(x$rec_disc[1]), logical(1)),
          rec_undetected = is.na(rec_delta)) %>%
   select(-.rl)
+# "undetected" must come from detection, not from absence in the MAST
+# table — MAST drops a gene for failing min.pct = 0.1 or logfc.threshold = 0.1, so a stable,
+# well-expressed receptor was being crossed out as unmeasurable. Detection is read from raw
+# counts in the receiving class; for a heteromeric complex every subunit must clear the floor.
+source(file.path(PROJ, "scripts", "_receptor_detection_FH.R"))
+.RECV <- if (RECV_SET == "astro") "Astro" else "Oligo"
+.subunits <- unique(unlist(strsplit(as.character(plot_df$receptor), "_", fixed = TRUE)))
+.det <- receptor_detection(PROJ, file.path(PROJ, "atlas", "NHD_FH_harmony.rds"),
+                           genes = .subunits, classes = .RECV, regions = present_regions)
+.pct_of <- function(rg, rcp) {
+  parts <- strsplit(rcp, "_", fixed = TRUE)[[1]]
+  i <- match(paste(parts, .RECV, rg), paste(.det$gene, .det$class, .det$region))
+  if (anyNA(i)) return(NA_real_)
+  min(.det$pct_max[i])            # a complex is measurable only if every subunit clears the floor
+}
+plot_df <- plot_df %>%
+  mutate(rec_pct_max = mapply(.pct_of, as.character(Region), as.character(receptor)),
+         rec_stable = !is.na(rec_pct_max) & rec_pct_max >= 0.10 & is.na(rec_delta),
+         rec_undetected = is.na(rec_pct_max) | rec_pct_max < 0.10)
+cat(sprintf("receptor DETECTION gate: %d of %d cells below the 10 %% floor; %d detected but stable: %s\n",
+            sum(plot_df$rec_undetected), nrow(plot_df), sum(plot_df$rec_stable),
+            paste(unique(sprintf("%s/%s %.0f%%", plot_df$receptor[plot_df$rec_stable], plot_df$Region[plot_df$rec_stable],
+                                 100 * plot_df$rec_pct_max[plot_df$rec_stable])), collapse = ", ")))
 cat(sprintf("receptor gate: %d of %d pair x region cells have an UNDETECTED receptor -> %s\n",
             sum(plot_df$rec_undetected), nrow(plot_df),
             paste(unique(plot_df$receptor[plot_df$rec_undetected]), collapse = ", ")))

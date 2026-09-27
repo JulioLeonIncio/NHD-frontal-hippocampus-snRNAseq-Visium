@@ -109,7 +109,31 @@ dat <- grid_full %>%
   left_join(dat, by = c("interaction_name_2","target","Region")) %>%
   group_by(interaction_name_2) %>%
   mutate(pathway_name = first(na.omit(pathway_name))) %>% ungroup()
+# The cross is keyed in the legend as "receptor not detected", but it was computed from
+# CellChat absence (`is.na(dprob) | maxprob == 0`), which can also mean the ligand side failed or the
+# permutation p did.
+# Detection is now read from raw counts in the receiving class through
+# the shared helper, so the claim holds by construction and cannot be broken by a change to the pair
+# list. A cell CellChat did not score whose receptor is detected would be a different state and is
+# reported separately rather than being drawn as "not detected".
+source(file.path(PROJ, "scripts", "_receptor_detection_FH.R"))
+.recv_gene <- function(x) trimws(sub("^.*\\s-\\s", "", as.character(x)))
+.subs <- unique(unlist(strsplit(gsub("[()]", "", .recv_gene(dat$interaction_name_2)), "\\+")))
+.detN <- receptor_detection(PROJ, file.path(PROJ, "atlas", "NHD_FH_harmony.rds"),
+                            genes = .subs, classes = RECEIVERS, regions = REGION_ORDER)
+.pct_of <- function(rcp, tgt, rg) {
+  parts <- strsplit(gsub("[()]", "", rcp), "\\+")[[1]]
+  i <- match(paste(parts, tgt, rg), paste(.detN$gene, .detN$class, .detN$region))
+  if (anyNA(i)) return(NA_real_); min(.detN$pct_max[i])     # a complex needs every subunit above the floor
+}
+dat <- dat %>% mutate(rec_pct = mapply(.pct_of, .recv_gene(interaction_name_2), as.character(target), as.character(Region)),
+                      rec_below_floor = is.na(rec_pct) | rec_pct < 0.10)
 absent <- dat %>% filter(is.na(dprob) | maxprob == 0)
+.mismatch <- absent %>% filter(!rec_below_floor)
+if (nrow(.mismatch)) warning(sprintf("%d cell(s) CellChat did not score although the receptor IS detected (>= 10 %%): %s — these are NOT 'receptor not detected'",
+  nrow(.mismatch), paste(sprintf("%s/%s/%s %.0f%%", .mismatch$interaction_name_2, .mismatch$target, .mismatch$Region, 100 * .mismatch$rec_pct), collapse = "; ")))
+cat(sprintf("receptor detection in the receiver: %d of %d crossed cells are below the 10 %% floor (legend claim holds by construction)\n",
+            sum(absent$rec_below_floor), nrow(absent)))
 dat_pt <- dat %>% filter(!is.na(dprob), maxprob > 0)
 cat(sprintf("\ncells: %d drawn, %d not scored in that region/receiver (open cross)\n",
             nrow(dat_pt), nrow(absent)))

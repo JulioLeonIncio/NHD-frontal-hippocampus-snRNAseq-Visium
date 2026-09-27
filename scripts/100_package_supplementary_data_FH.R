@@ -125,8 +125,8 @@ ST18_COLS <- rbindlist(list(
              definition = c("Frontal or Hippo","raw_counts, log_normalized or thinned","NHD/CON median-depth ratio in the split","genes evaluated","median |Cliff's delta| attributable to depth alone","percent of genes with depth-only |delta| > 0.15","free text")),
   data.table(sheet = "D", column = c("Region","cell_type","med_CON","med_NHD","n_CON","n_NHD","ratio_NHD_over_CON","balance"),
              definition = c("Frontal or Hippo","atlas cell type","median UMI, control nuclei","median UMI, NHD nuclei","control nuclei","NHD nuclei","med_NHD / med_CON","matched, NHD deeper or NHD shallower")),
-  data.table(sheet = "E", column = c("region","program","depth_ratio_NHD_over_CON","control_split_x","n_per_arm","real_delta","depth_only_artifact","separable"),
-             definition = c("Frontal or Hippo","Fig. 5d program","NHD/CON median-depth ratio in excitatory neurons","depth gap reproduced within control nuclei","nuclei per arm of the control split","observed NHD-minus-control Cliff's delta","delta produced by the depth gap alone","TRUE when |real_delta| exceeds the depth-only artifact")),
+  data.table(sheet = "E", column = c("cell_type","region","program","depth_ratio_NHD_over_CON","control_split_x","n_per_arm","real_delta","depth_only_artifact","separable"),
+             definition = c("Neuron_Ex or Neuron_Inh — the bound is computed separately in each class, covering all 20 cells Fig. 5d plots","Frontal or Hippo","Fig. 5d program","NHD/CON median-depth ratio in excitatory neurons","depth gap reproduced within control nuclei","nuclei per arm of the control split","observed NHD-minus-control Cliff's delta","delta produced by the depth gap alone","TRUE when |real_delta| exceeds the depth-only artifact")),
   data.table(sheet = "F", column = c("region","cell_set","n_CON","n_NHD","median_UMI_CON","median_UMI_NHD","ratio_NHD_over_CON","KS_D","KS_p"),
              definition = c("Frontal or Hippo","Micro-PVM (Azimuth class) or Microglia (analysis set)","control nuclei","NHD nuclei","median UMI, control","median UMI, NHD","median_UMI_NHD / median_UMI_CON","Kolmogorov-Smirnov D between the two depth distributions","Kolmogorov-Smirnov P value"))))
 
@@ -346,10 +346,13 @@ ST24_TITLE  <- unname(TITLE_PUBLIC[["ST24"]])
 ST24_BACKS  <- "Fig. 2d; Fig. 3e,f; Fig. 4d; Fig. 5d"
 ST24_SOURCE <- paste0("127_program_delta_table_FH.R (copies of the panel tables of 2B_micro_program_violins_FH.R, 3D_astro_state_violins_FH.R, 3Fp_oligo_lineage_block_FH.R and 4C2_neuron_programme_dotmatrix_FH.R; the gene membership of every program is listed in ", sd_ref("ST6"), ", under the program name as it appears here)")
 ST24_COLS <- data.table(
-  column = c("figure_panel","cell_type","program","region","n_CON","n_NHD","cliffs_delta","p_wilcox","q_BH","effect_gate","q_star"),
-  type = c("character","character","character","character","integer","integer","numeric","numeric","numeric","logical","logical"),
+  column = c("figure_panel","cell_type","program","region","n_CON","n_NHD","cliffs_delta","p_wilcox","q_BH","effect_gate","q_star",
+             "n_genes_detected","n_genes_in_set","plotted"),
+  type = c("character","character","character","character","integer","integer","numeric","numeric","numeric","logical","logical",
+           "integer","integer","logical"),
   permitted_values = c("Fig. 2d | Fig. 3e | Fig. 4d | Fig. 5d", "Micro-PVM | Astro | Oligo | OPC | Neuron_Ex | Neuron_Inh", "panel axis label",
-                       "Frontal | Hippocampus", "count or NA", "count or NA", "-1 to 1 (3 decimals)", ">= 2.2250739e-308, <= 1", ">= 2.2250739e-308, <= 1", "TRUE | FALSE", "TRUE | FALSE"),
+                       "Frontal | Hippocampus", "count or NA", "count or NA", "-1 to 1 (3 decimals)", ">= 2.2250739e-308, <= 1", ">= 2.2250739e-308, <= 1", "TRUE | FALSE", "TRUE | FALSE",
+                       "count or blank", "count or blank", "TRUE | FALSE or blank"),
   definition = c(
     "Main-figure panel whose statistics table the row is copied from: Fig. 2d (microglial curated programs), Fig. 3e (astrocyte signature scores), Fig. 4d (oligodendrocyte-lineage programs, oligodendrocytes and OPC side by side) or Fig. 5d (neuronal programs, excitatory and inhibitory neurons side by side). Every value is the panel's own; nothing is recomputed for this file except the two logical gates, which are asserted equal to the panel's.",
     paste0("Atlas cell type of the nuclei scored (the vocabulary of ", sd_ref("ST1"), " and ", sd_ref("ST9"), "). Micro-PVM = the bona-fide microglial nuclei of Fig. 2 (CD163+/F13A1+ cluster held out); Oligo and OPC are scored separately on their own objects and read side by side in Fig. 4d; Neuron_Ex and Neuron_Inh are the two neuronal classes of Fig. 5d."),
@@ -361,8 +364,11 @@ ST24_COLS <- data.table(
     "Two-sided Mann-Whitney / Wilcoxon rank-sum p of the per-nucleus scores, NHD versus control, normal approximation with midranks (the panel's test). With one donor per condition it ranks programs only and carries no claim. Values the panel script wrote as 0 (double underflow) are floored to 2.2250739e-308 and must be read as p < 2.2e-308, never p = 0.",
     "Benjamini-Hochberg q of p_wilcox, adjusted within the panel over all its program x region (x lineage or class) tests (14 tests for Fig. 2d, 22 for Fig. 3e, 32 for Fig. 4d, 20 for Fig. 5d); the panel's own column, recomputed and asserted by script 127. Same underflow floor as p_wilcox.",
     "TRUE when |cliffs_delta| >= 0.15, the project's effect-size floor (the strict gate of every figure); the same rule as the panel's passes column, asserted equal. Together with q_star it reproduces the panel annotation: effect_gate = delta printed as a claim, q_star = grey mark, neither = below the floor and not significant.",
-    "TRUE when q_BH < 0.05 and |cliffs_delta| < 0.15: the grey 'q*' mark of the panels (statistically significant across thousands of nuclei but below the effect-size floor; a kept annotation, never an exclusion). Asserted equal to the panel's mark column."))
-stopifnot(nrow(ST24_COLS) == 11, !anyDuplicated(ST24_COLS$column))
+    "TRUE when q_BH < 0.05 and |cliffs_delta| < 0.15: the grey 'q*' mark of the panels (statistically significant across thousands of nuclei but below the effect-size floor; a kept annotation, never an exclusion). Asserted equal to the panel's mark column.",
+    "Genes of the set detected in at least 10 % of that population's nuclei in either condition, counted on raw RNA counts (all four panels). A module score is returned even when its members are undetected, and a rank-based effect size then reports near-complete separation on a negligible shift, so the basis of the score travels with it.",
+    "Genes of the set present in the atlas; the denominator of n_genes_detected.",
+    "TRUE when the cell is drawn in the panel. The gate is n_genes_detected >= 3, or >= 2 where that is at least half the set (a two-gene set cannot reach three). Rows marked FALSE are reported for completeness and are not interpretable. Every Fig. 2d cell passes: all seven microglial programs are fully detected."))
+stopifnot(nrow(ST24_COLS) == 14, !anyDuplicated(ST24_COLS$column))
 ST24B_COLS <- data.table(
   column = c("figure_panel","cell_type","program","cliffs_delta_Frontal","cliffs_delta_Hippocampus","q_BH_Frontal","q_BH_Hippocampus","direction_consistent"),
   type = c("character","character","character","numeric","numeric","numeric","numeric","logical"),
@@ -650,7 +656,10 @@ load_st <- function(id) {
     # The README above promises that every program is listed in the Signatures sheet (ST6) — check it against the shipped ST6
     .st6 <- fread(st_files[["ST6"]])
     .p_need <- unique(d[figure_panel %in% c("Fig. 2d", "Fig. 3e", "Fig. 4d")]$program)
-    .p_have <- c(unique(.st6$signature), trimws(sub("^.* as program ", "", grep(" as program ", unique(.st6$scoring_context), value = TRUE))))
+    # a context may continue past the program name with the not shown clause
+    # ("... as program Complement/IFN-reactive (Liddelow); not shown in the panel: ..."), so cut at
+    # the first semicolon after the name — otherwise a gated-out program reads as missing from ST6.
+    .p_have <- c(unique(.st6$signature), trimws(sub(";.*$", "", sub("^.* as program ", "", grep(" as program ", unique(.st6$scoring_context), value = TRUE)))))
     stopifnot("ST24 program(s) with no row in ST6 (sheet Signatures) — re-run 90 ST6" = all(.p_need %in% .p_have),
               "ST24 Fig. 5d programs must all have a Fig5d_ set in ST6" = length(grep("^Fig5d_", unique(.st6$signature))) == length(unique(d[figure_panel == "Fig. 5d"]$program)))
     say("   ST24: all %d Fig. 2d / 3e / 4d programs have a row in ST6 (%d by name, %d via a stated panel label)", length(.p_need),

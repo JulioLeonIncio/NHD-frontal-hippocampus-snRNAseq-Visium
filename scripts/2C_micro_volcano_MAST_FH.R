@@ -7,7 +7,7 @@
 # NHD-vs-CON:
 #   x = avg_log2FC (NHD vs CON)     y = -log10(p_val_adj)   [descriptive only]
 #   colour = microglial PROGRAM (re-validated on FH
-#            data — see gene-set re-validation below); two-tier size encoding
+#            data — see gene-set validation below); two-tier size encoding
 #            (nominal padj<0.05 small / strict + |Cliff's d|>=0.15 big).
 #
 # Honest FRAMING (project policy): the y-axis padj is per-nucleus and inflated by
@@ -70,7 +70,7 @@ LFC_MIN <- log2(FC_MIN)            # ~0.263 in log2 units; drawn as vertical das
 CD_CUT   <- 0.15                   # |Cliff's delta| effect-size gate (baked into discovery)
 PADJ_CUT <- 0.05                   # adjusted-p gate (baked into discovery); drawn as h-guide
 
-# --- themed microglial programs ---
+# --- themed microglial programs (validated here) ---
 # Direction is read from the x-axis; a gene is themed only where its discovery
 # direction matches its program's expected direction (up theme -> NHD-up, lost ->
 # CON-up).  Every gene below was confirmed detected + directionally moving in the
@@ -92,12 +92,14 @@ MICRO_THEME <- c(
   # --- lost in NHD (CON-up) ---
   P2RY12="Homeostatic (lost)", MEF2C="Homeostatic (lost)",
   PLXDC2="Homeostatic (lost)", SORL1="Homeostatic (lost)",
-  IRAK3="Immunoregulatory brake (lost)", LDLRAD4="Immunoregulatory brake (lost)",
-  ZBTB16="Immunoregulatory brake (lost)", HDAC9="Immunoregulatory brake (lost)")
+  # "Immunoregulatory brake" renamed — none of these four is a receptor (IRAK3 pseudokinase, LDLRAD4 SMAD
+  # regulator, ZBTB16 transcription factor, HDAC9 deacetylase); the inhibitory receptor FCGR2B rises, it does not fall.
+  IRAK3="Negative regulators (lost)", LDLRAD4="Negative regulators (lost)",
+  ZBTB16="Negative regulators (lost)", HDAC9="Negative regulators (lost)")
 
 THEME_UP   <- c("Antigen presentation","Metal handling (iron/zinc)","Phagocytic / lysosomal",
                 "Glycolytic shift","Inflammatory / stress response","CD163+/F13A1+ state")
-THEME_LOST <- c("Homeostatic (lost)","Immunoregulatory brake (lost)")
+THEME_LOST <- c("Homeostatic (lost)","Negative regulators (lost)")
 THEME_LEVELS <- c(THEME_UP, THEME_LOST)
 THEME_PAL <- c(
   "Antigen presentation"            = "#C1272D",  # red
@@ -107,7 +109,7 @@ THEME_PAL <- c(
   "Inflammatory / stress response"  = "#D81B60",  # magenta
   "CD163+/F13A1+ state"              = "#6D4C41",  # brown
   "Homeostatic (lost)"              = "#2E86AB",  # blue
-  "Immunoregulatory brake (lost)"   = "#1B9E77")  # teal
+  "Negative regulators (lost)"   = "#1B9E77")  # teal
 
 # -----------------------------------------------------------------------------
 # 1. Load + filter (atlas-free CSV only)

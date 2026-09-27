@@ -115,6 +115,31 @@ score_one <- function(x, lineage_label) {
   cbind(x@meta.data[, c("Region","Condition")], lineage = lineage_label,
         as.data.frame(sm))
 }
+# `feats` is filtered on the ROWNAMES of the oligodendrocyte matrix and
+# then applied unchanged to OPC, so an OPC cell can be scored on members that are not expressed
+# there at all — five of the sixteen OPC cells had a median score shift of exactly 0.000, and
+# OPC/Hippocampus "Cholesterol (sterol arm)" rendered as an NHD-UP dot on 5 of 13 members
+# detected. Detection is therefore measured per lineage and region on raw counts, and a cell is
+# reported only where at least 3 members clear the 10 % floor there.
+# A purely absolute rule mis-fires on small sets: "Lipid uptake / salvage" has three members in
+# total and one of them (SLC44A1) is detected in 99 % of oligodendrocytes, so "fewer than 3
+# detected" would discard a real measurement. The gate is therefore absolute or relative:
+# >= 3 members detected, or >= 2 covering at least half the set.
+DET_MIN <- 0.10; DET_N_MIN <- 3L; DET_FRAC_MIN <- 0.5
+det_of <- function(x, lineage_label) {
+  cn <- GetAssayData(x, assay = "RNA", layer = "counts"); mdx <- x@meta.data
+  do.call(rbind, lapply(names(feats), function(nm) do.call(rbind, lapply(REGIONS, function(rg) {
+    gs <- intersect(feats[[nm]], rownames(cn))
+    mx <- if (!length(gs)) numeric(0) else do.call(pmax, lapply(c("CON", "NHD"), function(cd) {
+      cl <- rownames(mdx)[mdx$Region == rg & mdx$Condition == cd]
+      if (!length(cl)) setNames(rep(0, length(gs)), gs) else Matrix::rowMeans(cn[gs, cl, drop = FALSE] > 0) }))
+    data.frame(signature = nm, Region = rg, lineage = lineage_label,
+               n_present = length(gs), n_det10 = sum(mx >= DET_MIN), stringsAsFactors = FALSE) }))))
+}
+det_tab <- rbind(det_of(o, "Oligodendrocyte"), det_of(opc, "OPC"))
+cat("\ndetected members per signature x lineage x region (>= 10 % of nuclei in either condition):\n")
+print(det_tab[order(det_tab$lineage, det_tab$n_det10), ], row.names = FALSE)
+
 score_df <- bind_rows(score_one(o, "Oligodendrocyte"), score_one(opc, "OPC")) %>%
   pivot_longer(cols = all_of(names(feats)), names_to = "signature", values_to = "score") %>%
   mutate(Condition = factor(Condition, levels = c("CON","NHD")),
@@ -149,6 +174,15 @@ stat <- score_df %>%
          # effect-gated "q*" mark (q<0.05 and |delta|<0.15). q_BH stays in the CSV.
          label  = case_when(q_BH < 0.05 & !passes ~ "q*", TRUE ~ ""),
          delta_lab = sprintf("italic(delta) == '%+.2f'", cliff_d))
+
+# apply the per-lineage detection gate: an ungated cell keeps its numbers in the CSV but is not drawn
+stat <- stat %>% left_join(det_tab, by = c("signature", "Region", "lineage")) %>%
+  mutate(scorable = !is.na(n_det10) &
+           (n_det10 >= DET_N_MIN | (n_det10 >= 2L & n_det10 / n_present >= DET_FRAC_MIN)))
+stopifnot("detection table does not cover every signature x region x lineage" = !any(is.na(stat$n_det10)))
+if (any(!stat$scorable)) cat(sprintf("\nNOT SCORABLE (fewer than %d members detected at >= 10 %%, and under half the set, in that lineage/region): %s\n", DET_N_MIN,
+  paste(sprintf("%s/%s/%s (%d of %d)", stat$signature[!stat$scorable], stat$lineage[!stat$scorable],
+                stat$Region[!stat$scorable], stat$n_det10[!stat$scorable], stat$n_present[!stat$scorable]), collapse = "; ")))
 
 # ── degenerate-value guards (reviewer-facing) — p/q underflow + -log10 cap ────
 XMIN <- .Machine$double.xmin
@@ -203,6 +237,13 @@ cat(sprintf("\ndepth-matched control at T = %d UMI:\n", DEPTH_T))
 dmc <- bind_rows(depth_matched_delta(o, "Oligodendrocyte"),
                  depth_matched_delta(opc, "OPC"))
 stat <- stat %>% left_join(dmc, by = c("signature","Region","lineage"))
+# a cell that clears the effect gate on the share metric but not at matched depth is a share
+# artefact: report it so it can never be read as biology without the depth number beside it
+.frag <- stat$scorable & stat$passes & !is.na(stat$cliff_d_depth_matched) & abs(stat$cliff_d_depth_matched) < 0.15
+if (any(.frag)) cat(sprintf("\nDEPTH-FRAGILE (|delta| >= 0.15 on the share metric, < 0.15 at matched depth): %s\n",
+  paste(sprintf("%s/%s/%s (%.2f -> %.2f)", stat$signature[.frag], stat$lineage[.frag], stat$Region[.frag],
+                stat$cliff_d[.frag], stat$cliff_d_depth_matched[.frag]), collapse = "; ")))
+
 cat("\nplotted (share-based) vs depth-matched delta:\n")
 print(as.data.frame(stat %>%
   mutate(cliff_d = round(cliff_d, 3),
@@ -215,7 +256,7 @@ print(as.data.frame(stat %>%
 TDIR <- file.path(PROJ, "tables"); dir.create(TDIR, showWarnings = FALSE, recursive = TRUE)
 stat_export <- stat %>% select(signature, Region, lineage, p, q_BH, cliff_d,
                                cliff_d_depth_matched, ratio_depth_matched, n_depth_matched,
-                               passes, label, n_CON, n_NHD)
+                               passes, label, n_CON, n_NHD, n_present, n_det10, scorable)
 write.csv(stat_export, file.path(TDIR, "oligo_lineage_deltas_FH.csv"), row.names = FALSE)
 cat("wrote tables/oligo_lineage_deltas_FH.csv (", nrow(stat_export), " rows)\n", sep = "")
 cat("\nper (signature x region) delta / q / label:\n")
@@ -279,7 +320,12 @@ cat("Saved _supp/", BN1, ".{pdf,png}\n", sep = "")
 # =============================================================================
 L <- max(ceiling(max(abs(stat$cliff_d), na.rm = TRUE) * 20) / 20, 0.15)
 cat(sprintf("dotmatrix fill: symmetric +/- %.2f (max |delta|=%.3f)\n", L, max(abs(stat$cliff_d), na.rm=TRUE)))
-dm <- stat %>% mutate(delta_c = pmax(pmin(cliff_d, L), -L),
+# only scorable cells are drawn (see the detection gate above); the row label carries the basis
+# a cell that clears the effect gate on the share metric but not at matched depth is drawn hollow:
+# the figure's claim is "share, not amount", so a share-only effect must not read as a solid result
+dm <- stat %>% filter(scorable) %>%
+  mutate(fragile = passes & !is.na(cliff_d_depth_matched) & abs(cliff_d_depth_matched) < 0.15) %>%
+  mutate(delta_c = pmax(pmin(cliff_d, L), -L),
                       Region = factor(Region, levels = REGIONS),
                       lineage = factor(lineage, levels = LINEAGE_LEVELS),
                       signature = factor(signature, levels = names(feats)))
@@ -289,6 +335,9 @@ stars_qgrey <- dm %>% filter(label == "q*")
 # Narrow 2-column dot-matrix: shrink strip fontsize + clip="off" so the full
 # "Hippocampus" banner is not truncated.
 strip_lo2 <- strip_region_x(REGIONS, fontsize = 7.3, clip = "off")
+# Note: the detected-member count is not put in the y label here, unlike Fig. 3f —
+# eight rows at this pitch turn a three-line label into overlapping text (checked by eye). The
+# basis travels in oligo_lineage_deltas_FH.csv / ST24 (n_present, n_det10, scorable) and in the legend.
 ylab_map <- setNames(str_wrap(names(feats), width = 18), names(feats))
 
 # Full region name only (no suffix); Frontal / Hippocampus both single-line.
@@ -296,7 +345,10 @@ dm_region_labeller <- ggplot2::as_labeller(function(x)
   ifelse(x %in% names(REGION_FULL), unname(REGION_FULL[x]), x))
 
 p_dm <- ggplot(dm, aes(x = lineage, y = signature)) +
-  geom_point(aes(fill = delta_c, size = dotsize), shape = 21, colour = "grey35", stroke = 0.3) +
+  geom_point(data = function(d) dplyr::filter(d, !fragile),
+             aes(fill = delta_c, size = dotsize), shape = 21, colour = "grey35", stroke = 0.3) +
+  geom_point(data = function(d) dplyr::filter(d, fragile),
+             aes(size = dotsize), shape = 21, fill = NA, colour = "grey35", stroke = 0.45) +
   geom_text(data = stars_qgrey, aes(x = lineage, y = signature, label = label),
             inherit.aes = FALSE, nudge_y = 0.30, size = 2.6, colour = "grey50", vjust = 0.5) +
   facet_wrap2(~ Region, nrow = 1,

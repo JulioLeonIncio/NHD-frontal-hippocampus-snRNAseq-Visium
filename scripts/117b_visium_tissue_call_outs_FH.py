@@ -23,7 +23,7 @@
 #   (rebuilt from raw with the analysis call, Space Ranger h5 layout as in 108e), metrics_summary.csv,
 #   tissue_call.csv (barcode, in_tissue_spaceranger, in_tissue_analysis, tissue_call_source, he_fraction,
 #   nCount_raw, nFeature_raw, pct_mt_raw, array_row, array_col, pxl_row_in_fullres, pxl_col_in_fullres),
-#   TISSUE_CALL_provenance.json (thresholds, tier counts, mask agreement; "approved_by" left empty for the pi).
+#   TISSUE_CALL_provenance.json.
 # Plus Visium/VISIUM_OUTS_MANIFEST.json (section -> outs folder) read by every downstream script, the
 # review figure figures/_diagnostics/visium_tissue_call/<section>_tissue_call_tiers.png and
 # tables/visium_tissue_call_summary_FH.csv.

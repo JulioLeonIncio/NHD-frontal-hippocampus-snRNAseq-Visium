@@ -113,6 +113,7 @@ scripts,_gsea_composite_metric.R,,"Shared GSEA preranking metric (single source 
 scripts,_neuron_subclass_FH.R,,Single source for the per-nucleus neuron subclass / subtype label used by every Figure 5 / supplementary script.
 scripts,_oligo_programmes_FH.R,,Single source for the oligodendrocyte-lineage programme gene sets used by Figure 4.
 scripts,_pan2024_csf1r_signatures.R,,"Pan et al. 2024 (Acta Neuropathol Commun, PMC11365264) CSF1R-RD microglia / oligo / OPC state SIGNATURES, curated for the NHD cross-microgliopathy"
+scripts,_receptor_detection_FH.R,,"Single source for ""is this receptor detected in the receiving population?"", used by the ligand-receptor panels (Fig. 3g micro->astro, Fig. 3h astro->neuron)."
 scripts,_sd_map_FH.R,,"The fixed map of the ""Supplementary Data"" package:"
 scripts,_visium_L1_annotation_rule_FH.R,,"Single source for how the digitised dashed lines of the pathologists' H&E annotation (tables/annotation_dashes_20260918_mapunits.csv; Fig6_260918_anatomy.pdf, 600 dpi) are grouped into components and"
 scripts,_visium_depth_FH.R,,Single source for the derived cortical-depth axis used by the Figure-6 panels. Sourced by 71 and 72 so they cannot drift apart.

@@ -41,7 +41,7 @@ stopifnot("MISSING atlas" = file.exists(ATLAS))
 
 REGIONS <- REGION_ORDER            # c("Frontal","Hippo")
 
-# --- the 7 microglial PROGRAMS (identical to the volcano MICRO_THEME; FH-revalidated) ---
+# --- the 7 microglial PROGRAMS (identical to the volcano MICRO_THEME; validated here) ---
 PROGRAMS <- list(
   "Antigen presentation"           = c("CD74","HLA-DRA","HLA-DRB1","HLA-DMB"),
   "Metal handling (iron/zinc)"     = c("FTH1","FTL","HAMP","TMEM163"),
@@ -49,7 +49,7 @@ PROGRAMS <- list(
   "Glycolytic shift"               = c("PFKFB3","SLC2A3"),
   "Inflammatory / stress response" = c("CEBPD","ZFP36L1","RGS1","SRGN","HSPA1A","TNFRSF1B","NAIP"),
   "Homeostatic (lost)"             = c("P2RY12","MEF2C","PLXDC2","SORL1"),
-  "Immunoregulatory brake (lost)"  = c("IRAK3","LDLRAD4","ZBTB16","HDAC9"))
+  "Negative regulators (lost)"  = c("IRAK3","LDLRAD4","ZBTB16","HDAC9"))   # negative regulators of myeloid activation; none of the four is a receptor
 PROG_ORDER <- names(PROGRAMS)
 
 OR_CON_FILL <- unname(PAL_COND_PALE[["CON"]])   # theme single-source
@@ -117,6 +117,36 @@ stat_df <- md %>% group_by(program, Region) %>%
          delta_lab = sprintf("italic(delta) == '%+.2f'", cliff_d),
          y_top   = y_max + 0.06 * (y_max - y_min),
          y_delta = y_max + 0.19 * (y_max - y_min))
+# The detection basis of each program score travels with it, exactly as 3D does for the
+# astrocyte sets (script 127 then carries n_genes_detected / n_genes_in_set / plotted into ST24, so
+# Fig. 2d no longer ships blank gate columns while Figs. 3e/4d/5d ship measured ones). AddModuleScore
+# returns a value even when a set's members are undetected, so the count is computed on RAW counts.
+# Gate: >= 3 members detected in >= 10 % of that region's microglia in either condition, or >= 2
+# covering at least half the set (a 2-gene set such as Glycolytic shift cannot reach three).
+.raw <- GetAssayData(o, assay = "RNA", layer = "counts")
+.det <- do.call(rbind, lapply(REGIONS, function(rg) do.call(rbind, lapply(PROG_ORDER, function(nm) {
+  g <- present[[nm]]
+  pc <- sapply(c("CON","NHD"), function(cd) {
+    idx <- which(o$Region == rg & o$Condition == cd)
+    if (!length(idx)) return(rep(NA_real_, length(g)))
+    Matrix::rowMeans(.raw[g, idx, drop = FALSE] > 0) })
+  pmx <- apply(matrix(pc, nrow = length(g)), 1, max, na.rm = TRUE)
+  nd  <- sum(pmx >= 0.10)
+  data.frame(program = nm, Region = rg, n_in_set = length(g), n_det10 = nd,
+             scorable = nd >= 3L || (nd >= 2L && nd >= ceiling(length(g) / 2)),
+             stringsAsFactors = FALSE) }))))
+# Not a left_join: joining against a character key coerces stat_df$program from its PROG_ORDER
+# factor to character, and the facets then come out alphabetical. match() adds the columns and leaves
+# the factor alone.
+.k <- match(paste(as.character(stat_df$program), as.character(stat_df$Region)),
+            paste(.det$program, .det$Region))
+stopifnot("a stat_df row has no detection row" = !anyNA(.k))
+stat_df$n_in_set <- .det$n_in_set[.k]; stat_df$n_det10 <- .det$n_det10[.k]; stat_df$scorable <- .det$scorable[.k]
+stopifnot("program stopped being a PROG_ORDER factor" = is.factor(stat_df$program) && identical(levels(stat_df$program), PROG_ORDER))
+cat("\n== detection basis of the program scores (raw counts, >= 10 % of that region's microglia) ==\n")
+for (i in seq_len(nrow(.det))) cat(sprintf("  %-32s %-8s %d/%d detected%s\n", .det$program[i], .det$Region[i],
+    .det$n_det10[i], .det$n_in_set[i], ifelse(.det$scorable[i], "", "   <-- NOT SCORABLE")))
+stopifnot("a Fig. 2d program lost its detection row" = !anyNA(stat_df$n_det10))
 write.csv(stat_df, file.path(TDIR, "fig2_micro_program_violin_stats_FH.csv"), row.names = FALSE)
 cat("\n== per-facet stats (q_BH, Cliff's delta, star) ==\n")
 print(as.data.frame(stat_df[, c("program","Region","q_BH","cliff_d","star")]), row.names = FALSE)

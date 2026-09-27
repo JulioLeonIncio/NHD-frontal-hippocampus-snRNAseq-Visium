@@ -9,11 +9,11 @@
 # Perimeter sectors: Astro, OPC, Oligo, Micro-PVM (PAL_CELLTYPE hues).
 # Ribbons coloured by pathway, restricted to the curated micro->glia programme.
 #
-# CRITICAL (project gotcha): CellChat pathway_name != ligand.  GAS6's pathway is
+# Note: CellChat pathway_name != ligand.  GAS6's pathway is
 # "GAS", PROS1's is "PROS", PSAP's is "PSAP", SPP1's is "SPP1".  We select on the
 # curated pathway set but the ligand-level identity is what carries the biology.
 #
-# FH-RE-VALIDATION of the reference 4-pathway set
+# Validation of the reference 4-pathway set
 # {SPP1, GAS, PSAP, SEMA4} against tables/cellchat_all_LR_pairs.csv:
 #   * SPP1  micro->{Astro(CD44),OPC/Oligo(integrins)}  present CON+NHD, both regions.
 #   * GAS   (GAS6->MERTK[astro]/TYRO3[OPC,oligo]/AXL)   present CON+NHD, both regions;
@@ -94,16 +94,23 @@ cat(sprintf("CHORD_SET=%s | sectors: %s | out: %s\n",
             CHORD_SET, paste(CELLS, collapse=", "), BN_SET))
 REGIONS <- c("Frontal","Hippo")                    # canonical FH order
 CONDS   <- c("CON","NHD")
-# Curated micro->glia programme (FH-revalidated above). pros added vs reference.
+# Curated micro->glia programme (validated here above). pros added vs reference.
 # astro_neuron uses exactly the families already vetted in the 4G astro->neuron bubble panel
 # (NRXN / NCAM / CADM / NRG), so the chord and that panel show the same programme two ways and
 # there is no second curation to defend. Held out and documented: LAMININ + COLLAGEN (ECM bulk
 # -- they dominate on ribbon width without being a signalling programme), ADGRL (teneurin
 # adhesion, already held out of the micro->glia chord as off-programme), and BMP/EPHA/PTN/
 # UNC5/JAM/CDH/SLITRK/FGF/PTPR/ANGPTL.
+# The astro->neuron chord now tracks the bubble panel pair by pair, not by
+# family. 4G holds the astrocytic ligand to the ambient-expression rule the volcanoes use, which
+# removed NRXN1-NLGN1/-CLSTN1/-LRRTM4 and NRG3-ERBB4; NRXN therefore leaves the chord entirely and
+# NRG keeps only NRG2-ERBB4. The chord is filtered on interaction_name_2 (below) so the two halves
+# of panel h cannot drift apart again. Note NRXN carried ~70 % of the astro->neuron probability
+# mass, so the share-mode ribbons are re-normalised over what remains.
 TARGET_PATHS <- switch(CHORD_SET,
-                       astro_neuron = c("NRXN","NCAM","CADM","NRG"),
+                       astro_neuron = c("NCAM","CADM","NRG"),
                        c("SPP1","GAS","PROS","PSAP","SEMA4"))
+AN_PAIRS <- c("NCAM1 - NCAM1", "CADM1 - CADM1", "CADM1 - NECTIN3", "NRG2 - ERBB4")
 FLOOR_PROB   <- 1e-4                               # drop links below this (readability)
 
 # pathway ribbon palette — distinct, high-contrast; SPP1 gold + GAS emerald lead.
@@ -162,6 +169,7 @@ raw <- if (CHORD_SET == "astro_neuron") {
   load_withneurons() %>%
     filter(source %in% CELLS, target %in% CELLS, source != target,
            pathway_name %in% TARGET_PATHS,
+           trimws(interaction_name_2) %in% AN_PAIRS,
            Region %in% REGIONS, Condition %in% CONDS)
 } else read.csv(LR, stringsAsFactors = FALSE) %>%
   # region_cond is e.g. "CON_Frontal" -> split into Condition + Region

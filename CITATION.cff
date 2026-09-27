@@ -9,7 +9,7 @@ authors:
     email: julio.leon@ucsf.edu
     orcid: https://orcid.org/0000-0002-1113-4544
 version: 1.0.0
-date-released: 2026-09-21
+date-released: 2026-09-26
 license: MIT
 doi: 10.5281/zenodo.22884860            # Zenodo archive of v1.0-submission (2026-09-21); concept DOI 10.5281/zenodo.22884859 = all versions
 repository-code: https://github.com/JulioLeonIncio/NHD-frontal-hippocampus-snRNAseq-Visium

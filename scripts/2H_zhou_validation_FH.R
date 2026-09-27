@@ -145,7 +145,12 @@ for (.q in c(0.90, 0.95, 0.975, 0.99)) {
 # Labels are chosen after the frame and restricted to genes inside it -- ranking by
 # joint magnitude first would hand every label to the very outliers the frame excludes,
 # and ggrepel would then draw a leader line to a point that is not on the panel.
-lab_df <- m %>% filter(zhou_sig, !artifact,
+# This and 62 are the only data-driven callout sites in the package (labels chosen by
+# slice_max, not from a curated programme list), so they are where an excluded gene can appear.
+# `is_artifact()` is the ambient test; the headline-callout rule is `is_callout_excluded()`, which
+# also drops -AS/-DT antisense, LINC/MIR host genes and the named list. It was defined in
+# _artifact_genes.R in July and called by nothing until now.
+lab_df <- m %>% filter(zhou_sig, !artifact, !is_callout_excluded(gene, "Micro-PVM"),
                        abs(our_lfc) <= lim, abs(zhou_lfc) <= lim) %>%
   group_by(region) %>%
   slice_max(abs(our_lfc) + abs(zhou_lfc), n = 4, with_ties = FALSE) %>% ungroup()   # -> 4 per facet: the callouts live in the band below the cloud, and six ran into each other there

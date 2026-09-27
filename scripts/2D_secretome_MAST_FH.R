@@ -62,7 +62,7 @@ CT      <- "Micro-PVM"   # POOLED microglia+PVM; PVM = 5.4% of compartment
 REGIONS <- REGION_ORDER            # c("Frontal","Hippo")
 PCT_FLOOR <- 0.10
 
-# --- Curated secretome gene -> category map -
+# --- Curated secretome gene -> category map (validated here) -
 secretome_groups <- list(
   "Cytokine"      = c("TGFB1","TNFSF13B"),                    # baff
   "Chemokine"     = c("CXCL12"),                              # SDF-1

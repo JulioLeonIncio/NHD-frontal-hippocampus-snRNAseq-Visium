@@ -18,7 +18,7 @@
 #   3_astro_umap_MT          continuous metallothionein module (MT2A/MT3/MT1G/MT1E)
 #   F3a_astro_UMAP_composite   condition | region stacked (matches 2a_micro sizing)
 #
-# FH module-gene re-validation vs the astro MAST full-expressed
+# FH module-gene validation vs the astro MAST full-expressed
 # tables: reactive genes kept = those detected + moving UP (GFAP/CD44/OSMR/TNC/...);
 # MT module = MT2A/MT3/MT1G/MT1E (brain-canonical MT2A/MT3 headline; MT1F/MT1G/MT1E
 # corroborate) — all detected + down in NHD in >=1 region.  Genes present/dropped
@@ -50,7 +50,7 @@ stopifnot("MISSING atlas NHD_FH_harmony.rds" = file.exists(ATLAS))
 
 REGIONS <- REGION_ORDER                     # c("Frontal","Hippo")
 
-# ---- module gene sets (FH-revalidated; intersect with atlas below) ----------
+# ---- module gene sets (validated here; intersect with atlas below) ----------
 # Reactive = curated pan-reactive/DAA genes that are detected + up in FH astro MAST.
 REACTIVE_GENES <- c("GFAP","CD44","OSMR","TNC","SERPINA3","VIM","CHI3L1","EMP1","STAT3","BAG3")
 # MT module: brain-canonical MT2A/MT3 headline + MT1G/MT1E/MT1F corroborators (all down in FH).

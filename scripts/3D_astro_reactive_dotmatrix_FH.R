@@ -40,20 +40,32 @@ CSV <- file.path(PROJ, "tables", "fig3d_astro_signature_stats.csv")
 if (!file.exists(CSV))
   stop("MISSING ", CSV, " — run 3D_astro_state_violins_FH.R first (it writes this table).")
 d <- read.csv(CSV, check.names = FALSE, stringsAsFactors = FALSE)
-stopifnot(all(c("signature","Region","cliff_d","q_BH","star","n_CON","n_NHD") %in% names(d)))
+stopifnot(all(c("signature","Region","cliff_d","q_BH","star","n_CON","n_NHD","n_det10","n_present","scorable") %in% names(d)))
+
+# Drop the rows whose module score is not interpretable.
+# AddModuleScore returns a score even when no member gene is detected, and a rank-based
+# Cliff's delta then reports near-total separation on a median shift of ~0.02 units. A
+# (signature, region) cell is kept only where >= 3 members reach 10 % detection in that
+# region (the same floor the paper uses everywhere else); a signature that fails in both
+# regions leaves the panel, and a signature that fails in one keeps the other with the
+# failing cell blank. The counts travel into the label so the reader can see the basis.
+DROP_BOTH <- d %>% group_by(signature) %>% summarise(none = !any(scorable), .groups = "drop") %>%
+  filter(none) %>% pull(signature) %>% as.character()
+if (length(DROP_BOTH)) cat("dropped (no region scorable): ", paste(DROP_BOTH, collapse = "; "), "\n")
+d <- d %>% filter(!signature %in% DROP_BOTH, scorable)
 
 # A1/A2 renamed
 # to provenance-anchored names; Metallothionein -> "(lost)". must match the strings
 # written by 3D_astro_state_violins_FH.R (the setequal() guard below enforces it).
-SIG_LEVELS <- c("Complement/IFN-reactive (Liddelow)","Pan-reactive",
-                "Ischemic/S100A10-reactive (Zamanian)","DAA (Habib)",
-                "Zhou NHD astrocyte","Interferon (Hasel)","STAT3 targets",
-                "Metallothionein (lost)","Homeostatic astro","Heat-shock (HSF1)","Synaptogenic")
+SIG_ALL <- c("Complement/IFN-reactive (Liddelow)","Pan-reactive",
+             "Ischemic/S100A10-reactive (Zamanian)","DAA (Habib)",
+             "Zhou NHD astrocyte","Interferon (Hasel)","STAT3 targets",
+             "Metallothionein (lost)","Homeostatic astro","Heat-shock (HSF1)","Synaptogenic")
+SIG_LEVELS <- SIG_ALL[SIG_ALL %in% unique(as.character(d$signature))]   # after the detection gate
 REG_LEVELS <- REGION_ORDER            # c("Frontal","Hippo")
-stopifnot("stats signatures do not match expected 11-state set" =
-            setequal(unique(as.character(d$signature)), SIG_LEVELS),
-          setequal(unique(as.character(d$Region)), REG_LEVELS),
-          nrow(d) == length(SIG_LEVELS) * length(REG_LEVELS))
+stopifnot("stats signatures drifted from the 11-state set" = all(SIG_LEVELS %in% SIG_ALL),
+          "every signature was gated out" = length(SIG_LEVELS) > 0,
+          setequal(unique(as.character(d$Region)), REG_LEVELS))
 cat("Loaded stats table:", nrow(d), "rows\n")
 d <- d %>% mutate(signature = factor(as.character(signature), levels = SIG_LEVELS),
                   Region    = factor(as.character(Region),    levels = REG_LEVELS))
@@ -85,7 +97,14 @@ stars_qgrey <- d %>% filter(star == "q*")
 # "(low n)" suffix, matching every other astro and oligo panel of Figure 3.
 low_conf <- "Hippo"
 strip_spec <- strip_region_x(REG_LEVELS, fontsize = 7.5, low_conf = low_conf, clip = "off")
-ylab_map <- setNames(str_wrap(SIG_LEVELS, width = 18), SIG_LEVELS)
+# the label carries how many members are detected, so a thin set cannot be read as a strong one
+det_lab <- d %>% group_by(signature) %>%
+  # Where the two regions differ, the conservative count is shown ("at least k of n"),
+  # so the label can never read as a fraction ("6/8 of 12" did)
+  summarise(lab = sprintf("%s\n(%s%d of %d detected)", as.character(signature)[1],
+                          if (length(unique(n_det10)) > 1) "\u2265 " else "", min(n_det10), unique(n_present)[1]), .groups = "drop")
+ylab_map <- setNames(paste0(str_wrap(sub("\n.*$", "", det_lab$lab), width = 18), "\n",
+                            sub("^.*\n", "", det_lab$lab)), as.character(det_lab$signature))
 
 # Vertical layout: signatures down the
 # y-axis, Region as two facet columns. Transposed, the region strips rotated onto the right

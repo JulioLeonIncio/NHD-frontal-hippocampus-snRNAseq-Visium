@@ -122,7 +122,7 @@ p_conc <- p_conc + theme(axis.text.y = element_blank(), axis.ticks.y = element_b
 p <- p_rho | p_conc
 # a short plain title top-left so the reader knows what the panel tests
 p <- p + plot_layout(guides = "collect", widths = c(1, 1.45)) +
-  plot_annotation(title = "Replication in the Zhou et al. cohort by NHD donor set",
+  plot_annotation(title = "Direction consistency with the Zhou et al. cohort by NHD donor set",   # was "Replication…", which the legend of this same figure contradicts ("Consistency measures, not replication") and which the house rule forbids for a 1-v-1 design
                   theme = theme(plot.title = element_text(size = 7.8, colour = "black", face = "plain", hjust = 0, margin = margin(0, 0, 3, 0)))) &
   theme(legend.position = "right", legend.box = "vertical", legend.spacing.y = unit(14, "pt"), legend.margin = margin(0, 0, 0, 0), legend.box.margin = margin(8, 0, 0, -2), legend.justification = "top")
 BN <- "SuppFig2_e_crosscohort_donor861"; W <- 7.05; H <- 2.85   # legends on the right; H 2.2 -> 2.7 so the sub-row pitch exceeds the n-label font (page has the room)

@@ -2,7 +2,7 @@
 # =============================================================================
 # 106_zhou_crosscohort_arms_FH.R — The Zhou 2023 contrast without donor 861, and its two companions, with the ST13 direction-consistency statistic recomputed per arm.
 # -----------------------------------------------------------------------------
-# RATIONALE (Satoru, Carlo, Piero — raised independently, 2026-09): our single NHD donor is
+# Rationale: our single NHD donor is
 # Zhou's NHD3 (verified from the object metadata in 105: 59-year-old female, PMI 36 h,
 # DAP12 c.2T>C = Table 1's donor 861). The cross-cohort agreement we report could therefore
 # be the same brain measured twice. This script asks whether the direction consistency

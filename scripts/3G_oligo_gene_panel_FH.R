@@ -138,13 +138,42 @@ mat_padj  <- to_mat("padj")
 mat_delta <- to_mat("delta")
 mat_det   <- to_mat("det")
 
-# ---- detection-floor greying (reviewer-facing edge case) --------------------
+# ---- detection floor, measured on raw COUNTS -------------------
+# Until now `mat_det` came from the MAST tables and a cell was greyed when the gene was
+# absent from them. `40_mast_percell_dual_FH.R` runs FindMarkers(min.pct = 0.1,
+# logfc.threshold = 0.1), so a gene is dropped for failing the detection floor or for being
+# stable — and 11 of the 61 greys were genes detected in >= 10 % of nuclei, MOBP at 72 % among
+# them. Greying them erased the galactolipid block of the frontal oligodendrocyte track, which
+# is the preserved arm that makes the sterol/sphingolipid failure specific rather than global.
+# Detection is therefore measured directly, and the two states are now drawn differently:
+#   grey       = below the 10 % detection floor (nothing can be said)
+#   open tile  = detected and stable (|log2FC| < 0.1, so MAST returns no row) -> a real near-zero
 DET_FLOOR  <- 0.10
-floor_mask <- is.na(mat_det) | (mat_det < DET_FLOOR)
-n_nottested <- sum(is.na(mat_lfc))            # gene not in a region's table
+source(file.path(PROJ, "scripts", "_receptor_detection_FH.R"))
+.det_raw <- receptor_detection(PROJ, file.path(PROJ, "atlas", "NHD_FH_harmony.rds"),
+                               genes = gene_present, classes = LINEAGES, regions = REGIONS)
+mat_det_raw <- matrix(NA_real_, length(track_levels), length(gene_present),
+                      dimnames = list(track_levels, gene_present))
+for (tr in track_levels) {
+  ct <- sub("\\|.*$", "", tr); rg <- sub("^.*\\|", "", tr)
+  i <- match(paste(gene_present, ct, rg), paste(.det_raw$gene, .det_raw$class, .det_raw$region))
+  mat_det_raw[tr, ] <- .det_raw$pct_max[i]
+}
+mat_det <- ifelse(is.na(mat_det), mat_det_raw, pmax(mat_det, mat_det_raw, na.rm = TRUE))
+floor_mask  <- is.na(mat_det) | (mat_det < DET_FLOOR)                 # nothing measurable
+stable_mask <- !floor_mask & is.na(mat_lfc)                           # detected, |log2FC| < 0.1
+n_nottested <- sum(is.na(mat_lfc))
 n_floored   <- sum(floor_mask & !is.na(mat_lfc))
-cat(sprintf("greyed: %d not-tested (gene absent in region) + %d below detection floor (<%.2f)\n",
-            n_nottested, n_floored, DET_FLOOR))
+cat(sprintf("detection on raw counts: %d cell(s) below the %.0f %% floor -> grey; %d detected but stable -> open tile\n",
+            sum(floor_mask), 100 * DET_FLOOR, sum(stable_mask)))
+if (sum(stable_mask)) cat("  detected-but-stable:", paste(sprintf("%s/%s %.0f%%",
+    col(stable_mask)[stable_mask] |> (\(j) colnames(mat_lfc)[j])(),
+    row(stable_mask)[stable_mask] |> (\(i) rownames(mat_lfc)[i])(),
+    100 * mat_det[stable_mask]), collapse = ", "), "\n")
+# a detected-but-stable cell is a bounded near-zero, not missing data: MAST withheld it because
+# |log2FC| < 0.1, so it is drawn at zero (white) inside a dashed outline that says "bounded, not
+# estimated". Only cells below the detection floor stay grey.
+mat_lfc[stable_mask]  <- 0
 mat_lfc[floor_mask]   <- NA
 mat_padj[floor_mask]  <- NA
 mat_delta[floor_mask] <- NA
@@ -224,6 +253,9 @@ ht <- Heatmap(
     # effect-size idiom — not a per-nucleus significance-stars panel. Small grey text, drawn on top.
     if (isTRUE(mat_qgate[i, j]))
       grid.text("q*", x, y, gp = gpar(fontsize = 6.5, col = "grey45"), vjust = 0.72)
+    # detected and stable: an outlined empty tile, never the grey of "not measurable"
+    if (isTRUE(stable_mask[i, j]))
+      grid.rect(x, y, w * 0.86, h * 0.86, gp = gpar(fill = NA, col = "grey55", lty = "22", lwd = 0.6))
   })
 
 n_gene <- ncol(mat_lfc)

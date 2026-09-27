@@ -84,7 +84,8 @@ stopifnot("ALL_SIG_ORDER drifted from the shared helper's names" =
             setequal(ALL_SIG_ORDER, c(unname(PUB_LAB), names(NEW_SIGS))) && length(ALL_SIG_ORDER) == 11L)
 
 # ---- mtime + signature-completeness cache guard ----------------------------
-cache_stale <- !file.exists(CACHE) || file.mtime(CACHE) < file.mtime(ATLAS)
+DETC <- sub("\\.rds$", "_detection.rds", CACHE)   # per-(signature, region) detected-member counts, written with the score cache
+cache_stale <- !file.exists(CACHE) || !file.exists(DETC) || file.mtime(CACHE) < file.mtime(ATLAS)
 if (!cache_stale) {
   have <- unique(readRDS(CACHE)$signature)
   if (!all(ALL_SIG_ORDER %in% have)) {
@@ -101,6 +102,22 @@ if (cache_stale) {
   obj <- NormalizeData(obj, assay = "RNA", verbose = FALSE)
   ast <- subset(obj, subset = new_annotation == "Astro" & Region %in% REGIONS)
   cat(sprintf("   astro nuclei: %d\n", ncol(ast))); print(table(Region = ast$Region, Condition = ast$Condition))
+  # a module score says nothing when its members are not
+  # detected. AddModuleScore compares the set against randomly binned control genes, so a set
+  # whose members sit at the floor still returns a score whose tiny, systematic offset a
+  # rank-based Cliff's delta reports as near-total separation (Complement/IFN-reactive:
+  # 0 of 6 present members detected in frontal astrocytes, median score shift 0.019 units,
+  # yet delta +0.49 at q = 4e-211). Detection is therefore measured here, on RAW counts,
+  # per region and condition, and travels with the scores; the panel gates on it.
+  DET_MIN <- 0.10; DET_N_MIN <- 3L   # a set is scorable in a region when >= 3 members reach 10 % detection
+  det_of <- function(so, genes, name) {
+    gs <- intersect(genes, rownames(so)); cn <- GetAssayData(so, assay = "RNA", layer = "counts")
+    do.call(rbind, lapply(REGIONS, function(rg) {
+      mx <- if (!length(gs)) numeric(0) else do.call(pmax, lapply(c("CON", "NHD"), function(cd) {
+        cl <- colnames(so)[so$Region == rg & so$Condition == cd]
+        if (!length(cl)) setNames(rep(0, length(gs)), gs) else Matrix::rowMeans(cn[gs, cl, drop = FALSE] > 0) }))
+      data.frame(signature = name, Region = rg, n_in_set = length(genes), n_present = length(gs),
+                 n_det10 = sum(mx >= DET_MIN), stringsAsFactors = FALSE) })) }
   score_sig <- function(so, genes, name) {
     gs <- intersect(genes, rownames(so)); dropped <- setdiff(genes, rownames(so))
     cat(sprintf("   [%-19s] %2d/%2d genes present%s\n", name, length(gs), length(genes),
@@ -115,6 +132,11 @@ if (cache_stale) {
     # the five published sets, scored under their panel labels (A1_reactive -> LAB_A1, ...)
     lapply(names(PUB_LAB), function(k) score_sig(ast, sigs[[k]], unname(PUB_LAB[[k]]))),
     lapply(names(NEW_SIGS), function(nm) score_sig(ast, NEW_SIGS[[nm]], nm)))
+  det <- bind_rows(c(lapply(names(PUB_LAB), function(k) det_of(ast, sigs[[k]], unname(PUB_LAB[[k]]))),
+                     lapply(names(NEW_SIGS), function(nm) det_of(ast, NEW_SIGS[[nm]], nm))))
+  cat("\n   detected members per set (>= 10 % of astrocyte nuclei in either condition):\n")
+  print(det[order(det$Region, det$n_det10), ], row.names = FALSE)
+  saveRDS(det, DETC)
   glial <- bind_rows(score_calls)
   tmp <- paste0(CACHE, ".tmp"); saveRDS(glial, tmp); file.rename(tmp, CACHE)
   cat(sprintf("   wrote %s (%d rows, %d signatures)\n", basename(CACHE), nrow(glial), length(unique(glial$signature))))
@@ -160,9 +182,19 @@ stat_df <- stat_df %>% mutate(
   # (q<0.05 and |delta|<0.15, i.e. significant-but-small). q_BH stays in the CSV.
   star = case_when(q_BH < 0.05 & !passes_effect ~ "q*", TRUE ~ ""))
 
+# detection gate: a cell is reported only where >= 3 members reach 10 % detection in that region
+DET_N_MIN <- 3L
+det <- readRDS(DETC)
+stat_df <- stat_df %>% left_join(det, by = c("signature", "Region")) %>%
+  mutate(scorable = !is.na(n_det10) & n_det10 >= DET_N_MIN)
+stopifnot("detection table does not cover every signature x region" = !any(is.na(stat_df$n_det10)))
+if (any(!stat_df$scorable)) cat(sprintf("\nNOT SCORABLE (< %d members detected at >= 10 %%): %s\n", DET_N_MIN,
+  paste(sprintf("%s/%s (%d of %d)", stat_df$signature[!stat_df$scorable], stat_df$Region[!stat_df$scorable],
+                stat_df$n_det10[!stat_df$scorable], stat_df$n_present[!stat_df$scorable]), collapse = "; ")))
+
 cat("\nPer-facet stats (BH-FDR + Cliff's delta):\n")
 print(as.data.frame(stat_df %>% select(signature, Region, n_CON, n_NHD, med_CON, med_NHD,
-        p_wilcox, q_BH, cliff_d, star) %>% mutate(across(where(is.numeric), ~signif(.x, 3)))),
+        p_wilcox, q_BH, cliff_d, star, n_present, n_det10, scorable) %>% mutate(across(where(is.numeric), ~signif(.x, 3)))),
       row.names = FALSE)
 write.csv(stat_df, file.path(TDIR, "fig3d_astro_signature_stats.csv"), row.names = FALSE)
 cat(sprintf("Wrote stats CSV: %d rows (%d signatures x %d regions)\n",

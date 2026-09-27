@@ -12,7 +12,7 @@
 # admixture; off-target cardiac/muscle/vascular; neuronal-ambient synaptic;
 # clock-mislabel) — the same junk terms recur in FH; kept.
 #
-# FH re-validation of the reference 5-program set
+# Validation of the reference 5-program set
 # against diagnostics/05_GSEA/.../fGSEA_NHD_MAST_cliffs_all.csv (Astro rows):
 #   * OXPHOS / respiration  down both regions (FDR-sig Frontal, Hippo)   -> common.
 #   * Ubiquitin-proteasome  down Frontal (FDR-sig)                        -> region.
@@ -128,7 +128,7 @@ print(as.data.frame(ast %>% group_by(Region) %>%
         summarise(n_tested = n(), n_sig = sum(padj < 0.05, na.rm = TRUE), .groups = "drop")))
 cat("NOTE: Hippocampus has a single NHD donor lane — direction-consistent support, not replication.\n\n")
 
-# ---- FH-revalidated program set (metal-detox dropped; glutamate dropped) --------
+# ---- validated here program set (metal-detox dropped; glutamate dropped) --------
 # visual fix: the Glutamate-clearance/EAAT row is dropped from
 # this dotplot. It carried only two tiny near-white non-significant dots (padj~0.5-0.7,
 # NES~0) in a full-height facet, reading as a broken/empty row against the dense

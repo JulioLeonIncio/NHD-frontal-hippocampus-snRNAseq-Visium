@@ -573,7 +573,7 @@ run("ST6", {
     "Glycolytic shift"               = c("PFKFB3","SLC2A3"),
     "Inflammatory / stress response" = c("CEBPD","ZFP36L1","RGS1","SRGN","HSPA1A","TNFRSF1B","NAIP"),
     "Homeostatic (lost)"             = c("P2RY12","MEF2C","PLXDC2","SORL1"),
-    "Immunoregulatory brake (lost)"  = c("IRAK3","LDLRAD4","ZBTB16","HDAC9"))
+    "Negative regulators (lost)"  = c("IRAK3","LDLRAD4","ZBTB16","HDAC9"))   # negative regulators of myeloid activation; none of the four is a receptor
 
   # Neuron 8-programme set: exact defs that produced OLD ST7 (10b_figure5_v2.R);
   # the FH 4C script scores a subset (Presyn/Postsyn/GluR/OxPhos/IEG) of the same
@@ -694,7 +694,7 @@ run("ST6", {
   # carry it.
   .esd <- new.env(); sys.source(file.path(PROJ, "scripts", "_sd_map_FH.R"), envir = .esd)
   CTX <- get("SD_ST6_CTX", .esd)
-  stopifnot(setequal(names(CTX), c("nucleus","fig2d","visium","astro","fig4d","fig5d","fig2g","refonly")))
+  stopifnot(setequal(names(CTX), c("nucleus","fig2d","visium","astro","fig4d","fig5d","fig2g","refonly","notshown")))
   sig_ctx <- setNames(rep(CTX[["refonly"]], length(unique(st6$signature))), unique(st6$signature))
   # (a) the eight neuron programs are the ST7 (sheet Neuron_scores_per_nucleus) per-nucleus scores; the four
   #     curated sets they are built from are scored under the ST7 column name
@@ -723,6 +723,19 @@ run("ST6", {
   #     Runs AFTER (d)/(d2) so the five oligodendrocyte programs also scored on Visium (Structural
   #     myelin, Cholesterol (sterol arm), Fatty-acid / sphingomyelin, Galactolipid, Lipid uptake /
   #     salvage) get the Visium context appended exactly as the two microglial programs do.
+  #      Supplementary Data 6 labelled "Fig. 3e,f" and looks for it in a panel it was gated out of.
+  #      Derived from ST24's `plotted` flag (set by the detection gate), never hard-coded, so this
+  #      tracks the gate automatically if the sets or the floor change.
+  if (!is.null(.p24) && "plotted" %in% names(.p24)) {
+    .gated <- .p24[figure_panel %in% c("Fig. 3e", "Fig. 4d", "Fig. 5d"),
+                   .(shown = any(plotted %in% TRUE)), by = program][shown == FALSE]$program
+    if (length(.gated)) {
+      .k <- names(sig_ctx)[names(sig_ctx) %in% .gated |
+                           (names(sig_ctx) %in% names(ASTRO_PANEL) & unname(ASTRO_PANEL[names(sig_ctx)]) %in% .gated)]
+      sig_ctx[.k] <- paste(sig_ctx[.k], CTX[["notshown"]], sep = "; ")   # CTX is the local alias of SD_ST6_CTX
+      say("  ST6 marked NOT SHOWN (gated out of their panel): %s", paste(.k, collapse = ", "))
+    }
+  }
   .f23c <- file.path(OUT, "ST23c_visium_program_gene_sets_FH.csv")
   if (file.exists(.f23c)) { .vis <- intersect(unique(fread(.f23c)$program), names(sig_ctx))
     sig_ctx[.vis] <- paste(sig_ctx[.vis], CTX[["visium"]], sep = "; ")

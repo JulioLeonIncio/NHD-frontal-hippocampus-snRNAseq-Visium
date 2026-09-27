@@ -16,7 +16,7 @@
 # names, journal-style categorical palette (teal, magenta, steel blue,
 # salmon, mustard, light grey).
 #
-# House RULES (hard constraints, from the pi):
+# House rules:
 #   * no bold fonts anywhere in any panel (default all text plain).
 #   * no caption text inside panels (all explanation goes to legends).
 #   * Region facet strips = pale fill + black text, never saturated + white.

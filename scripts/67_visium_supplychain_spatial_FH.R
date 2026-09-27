@@ -16,7 +16,7 @@
 # SCD 78%, ELOVL5 36%; UGT8 22%, GALC 22%; SLC44A1 53%. So this is measurable
 # spatial biology, not a stretch.
 #
-# Two controls baked in, both learned the hard way in this project:
+# Two controls baked in:
 #   * depth. NHD spots carry half the depth of CON spots (median UMI per section
 #     in tables/visium_dm_qc_FH.csv, written by 65).
 #     Scores come from 65_visium_prep_depthmatched_FH.R, where every spot is

@@ -11,7 +11,7 @@
 # targets — no subtype roll-up needed; a direct Neuron_Ex->Ex / Neuron_Inh->Inh
 # rename replaces the reference's Azimuth/Tippani collapse).
 #
-# Critical gotcha: pairs keyed by interaction_name_2 (the ligand-RECEPTOR key),
+# Note: pairs keyed by interaction_name_2 (the ligand-RECEPTOR key),
 # not pathway_name (GAS6's pathway is "GAS", ENTPD1's is "CD39").
 #
 # Curated FH whitelist = the 5 significant micro->neuron axes:

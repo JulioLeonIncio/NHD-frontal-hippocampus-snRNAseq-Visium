@@ -114,8 +114,12 @@ for (rg in REGIONS) {
 
 lim <- max(abs(c(m$our_lfc, m$zhou_lfc)), na.rm = TRUE) * 1.03
 
-# labels: strongest Zhou-sig genes by joint magnitude (artifact excluded).
-lab_df <- m %>% filter(zhou_sig, !artifact) %>% group_by(region) %>%
+# labels: strongest Zhou-sig genes by joint magnitude.
+# Filtering on `artifact` alone let PWRN1 onto the panel twice. `is_artifact()` is the
+# ambient/contamination test; the HEADLINE-callout rule is `is_callout_excluded()`, which also drops
+# -AS/-DT antisense, LINC/MIR host genes and the named list (PWRN1, MEG8, GMDS-DT). A lncRNA callout
+# in the panel whose job is to look rigorous to a referee is exactly what that rule exists to prevent.
+lab_df <- m %>% filter(zhou_sig, !artifact, !is_callout_excluded(gene, "Neuron_Ex")) %>% group_by(region) %>%
   slice_max(abs(our_lfc) + abs(zhou_lfc), n = 4, with_ties = FALSE) %>% ungroup()
 
 fmt_p <- function(p) { if (is.na(p)) return("n.s.")

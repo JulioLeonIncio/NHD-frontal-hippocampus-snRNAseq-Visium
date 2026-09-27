@@ -270,4 +270,8 @@ SD_ST6_CTX <- c(nucleus = sprintf("scored per nucleus (%s)", sd_ref("ST7")),
                 fig4d   = sprintf("Fig. 4d program scoring (%s)", sd_ref("ST24")),
                 fig5d   = sprintf("Fig. 5d program scoring (%s)", sd_ref(c("ST24", "ST15", "ST15b", "ST16"))),
                 fig2g   = "Fig. 2g microglial-state enrichment set",
-                refonly = "reference only; not scored in a shipped panel")
+                refonly = "reference only; not scored in a shipped panel",
+                # a set that is computed but is gated out of its panel by the detection
+                # floor. Appended to the panel context by 90 from ST24's `plotted` flag, so the
+                # wording lives here once and the marking tracks the gate automatically.
+                notshown = "NOT SHOWN in the panel: fewer than three of its genes are detected in at least 10 % of that population's nuclei, so the score is not interpretable (the row is retained in Supplementary Data 7 with plotted = FALSE)")
