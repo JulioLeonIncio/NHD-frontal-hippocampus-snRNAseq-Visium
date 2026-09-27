@@ -28,10 +28,10 @@ suppressPackageStartupMessages({
 })
 set.seed(42)
 
-# --- portable project root (julio.l origin/RIKEN or JulioLeon local) --------
+# --- project root (NHD_PROJ) --------
 if (!nzchar(Sys.getenv("NHD_PROJ"))) stop("Set the NHD_PROJ environment variable to the NHD_frontal_hippo_rebuild folder (see README.md)")
 PROJ <- dirname(Sys.getenv("NHD_PROJ"))
-if (is.na(PROJ)) stop("MISSING project root — neither julio.l nor JulioLeon path exists")
+if (is.na(PROJ)) stop("MISSING project root — set NHD_PROJ to the analysis directory")
 DIR        <- file.path(PROJ, "NHD_frontal_hippo_rebuild")
 THEME_R    <- file.path(DIR, "scripts", "22_publication_theme_FH.R")
 ARTIFACT_R <- file.path(DIR, "scripts", "_artifact_genes.R")

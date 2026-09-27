@@ -81,7 +81,7 @@ cat("  (excluded by the direction audit and reported separately:",
 # 1 + 2.  snRNA atlas
 # ---------------------------------------------------------------------------
 # Version the gene set and
-# force a rebuild when it changes. (Dropbox also rewrites mtimes on CloudStorage, so
+# force a rebuild when it changes. (some synced file systems rewrite mtimes, so
 # mtime alone is not trustworthy in this project.)
 MYE_KEY  <- paste0("structural_myelin:", paste(sort(MYE), collapse = ","))
 KEY_FILE <- file.path(DDIR, "_myelin_scales_geneset.key")

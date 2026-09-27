@@ -104,7 +104,6 @@ MIT — see `LICENSE`.
 
 ## How to cite
 
-Please cite the article (Leon et al.) and this repository. The release archived for the manuscript is
-v1.0-submission, Zenodo DOI [10.5281/zenodo.22884860](https://doi.org/10.5281/zenodo.22884860); the concept DOI
-[10.5281/zenodo.22884859](https://doi.org/10.5281/zenodo.22884859) resolves to the latest version. `CITATION.cff`
-carries the reference.
+Please cite the article (Leon et al.) and this repository. Every release is archived on Zenodo under the
+concept DOI [10.5281/zenodo.22884859](https://doi.org/10.5281/zenodo.22884859), which always resolves to the
+latest version; the release page of each version carries its own DOI. `CITATION.cff` carries the reference.

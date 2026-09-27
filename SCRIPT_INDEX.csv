@@ -76,7 +76,7 @@ scripts,90_build_supplementary_tables_FH.R,90,90_build_supplementary_tables_FH.R
 scripts,92_micro_only_MAST_FH.R,92,"Microglia-ONLY differential expression, run with the identical model to the pooled Micro-PVM run that produced ST1."
 scripts,99b_crosscohort_summary_FH.R,99,Every cross-cohort comparison in one panel.
 scripts,99c_crosscohort_donor861_panel_FH.R,99,"Supplementary Fig. 2, panel f: the cross-cohort contrast with and without the shared donor (861 = Zhou NHD3)."
-scripts,100_package_supplementary_data_FH.R,100,"Package the supplementary tables for the journal as ""Supplementary Data 1-11"": eleven themed multi-sheet workbooks."
+scripts,100_package_supplementary_data_FH.R,100,"Package the supplementary tables for the journal as ""Supplementary Data 1-12"": twelve themed multi-sheet workbooks."
 scripts,102_export_deposition_bundle_FH.R,102,"Processed-data bundle for repository deposition (GEO / DDBJ-GEA style), so the Data Availability statement can be filled the day the"
 scripts,105_zhou_pseudobulk_cache_FH.R,105,"One load of the re-processed Zhou 2023 object, cached as per-cell-type pseudobulk count matrices + the per-sample metadata."
 scripts,106_zhou_crosscohort_arms_FH.R,106,"The Zhou 2023 contrast without donor 861, and its two companions, with the ST13 direction-consistency statistic recomputed per arm."

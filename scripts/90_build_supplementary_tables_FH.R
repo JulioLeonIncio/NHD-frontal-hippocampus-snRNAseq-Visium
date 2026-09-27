@@ -8,7 +8,7 @@
 # combined workbook NHD_Supplementary_Tables_FH.xlsx (one sheet per STn).
 #
 # Design rules:
-#   * Portable PROJ resolver (julio.l | JulioLeon).
+#   * PROJ resolver reading NHD_PROJ.
 #   * Idempotent: dir.create recursive; temp-then-rename for the workbook.
 #   * seed 42 where randomness applies (FindAllMarkers is deterministic given seed).
 #   * PREFER the 228 MB subset (atlas/NHD_FH_subset_RNA.rds); never the 2.9 GB heavy

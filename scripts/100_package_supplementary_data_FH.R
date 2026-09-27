@@ -1,6 +1,6 @@
 #!/usr/bin/env Rscript
 # =============================================================================
-# 100_package_supplementary_data_FH.R — Package the supplementary tables for the journal as "Supplementary Data 1-11": eleven themed multi-sheet workbooks.
+# 100_package_supplementary_data_FH.R — Package the supplementary tables for the journal as "Supplementary Data 1-12": twelve themed multi-sheet workbooks.
 # -----------------------------------------------------------------------------
 # Why. The journal does not accept large or Excel tables as
 # "Supplementary Table": they must be labeled "Supplementary Data N", uploaded as
@@ -930,7 +930,7 @@ writeLines(md, file.path(BUILD, "FIND_REPLACE_for_docx.md"))
 
 # ---- manifest ---------------------------------------------------------------
 wb_sum <- index[, .(n_sheets = .N, rows = sum(rows), cols = paste(cols, collapse = "/"), bytes = bytes[1], md5 = md5[1], sheets = paste(sheet, collapse = ", "), title = workbook_title[1]), by = .(number, file)]
-writeLines(c("# Supplementary Data package (11 themed workbooks, 2026-09-21 consolidation)",
+writeLines(c(sprintf("# Supplementary Data package (%d themed workbooks; 1-11 from the 2026-09-21 consolidation, 12 added 2026-09-26)", N_WB),
              sprintf("Built %s from supplementary_tables/ (90_build outputs; ST19 from 106; ST20 from 111; ST21 from 114; ST22 from 125; ST23 from 126; ST24 from 127) and tables/depth_A-F.", format(Sys.time(), "%Y-%m-%d %H:%M")),
              "Each .xlsx: sheet README (label, title, sheet list, conventions, then per former table: sheet name(s), what it holds, figures backed, source, column dictionary) then the data sheets.",
              "Numbers are copied verbatim from the shipped tables; nothing is re-derived here.",
@@ -957,9 +957,9 @@ if (length(stale)) {
 
 say("\nWrote %d Supplementary Data workbooks (%d data sheets) to %s", nrow(SD_WB), nrow(index), OUT)
 print(index[, .(number, sheet, internal_id, former_supplementary_data, rows, cols)])
-# the delivery folder must hold exactly the 11 workbooks (+ _build/)
+# the delivery folder must hold exactly the workbooks of SD_WB (+ _build/)
 .left <- setdiff(list.files(OUT, all.files = FALSE), c(sd_file_n(SD_WB$workbook), "_build"))
-stopifnot("Supplementary_Data/ holds files other than the 11 xlsx + _build/" = length(.left) == 0)
+stopifnot("Supplementary_Data/ holds files other than the SD_WB xlsx + _build/" = length(.left) == 0)
 say("Supplementary_Data/ holds exactly %d xlsx + _build/ (builder aids: %s)", nrow(SD_WB), paste(list.files(BUILD), collapse = ", "))
 cat("\n== sessionInfo ==\n"); print(sessionInfo())
 cat("\n=== DONE ===\n", file = stderr())

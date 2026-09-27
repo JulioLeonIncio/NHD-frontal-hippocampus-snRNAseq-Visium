@@ -6,7 +6,7 @@
 set -euo pipefail
 : "${NHD_PROJ:?Set the NHD_PROJ environment variable to the NHD_frontal_hippo_rebuild folder (see README.md)}"
 DST="$(dirname "$NHD_PROJ")/Visium/_HE_fullres"
-SRC="/osc-fs_home/julio.l/analysis/NHD_visium/Repeat_2025/Frontal/20241217_Frontal"
+SRC="${NHD_HE_SRC:?set NHD_HE_SRC to the Space Ranger run directory holding the H&E images}"
 mkdir -p "$DST"; : > "$DST/SOURCE_MAP.txt"
 while read -r s f; do
   rsync -a --partial -e "ssh -o BatchMode=yes" "d8-work:$SRC/$f" "$DST/${s}_HE_fullres.tif"

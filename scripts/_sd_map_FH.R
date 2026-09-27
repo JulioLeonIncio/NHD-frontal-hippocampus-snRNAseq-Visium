@@ -12,6 +12,7 @@
 # Pure data + pure functions; no side effects; base R only (the dictionary is sourced into a bare env).
 #
 # History.
+# (ST4) and network (ST5) from the package; those two ship inside the code release (reference_tables/).
 # CHANGING this map RENUMBERS every citation in the manuscript — the structure is asserted at the bottom.
 # Leon et al., Nasu-Hakola disease frontal cortex and hippocampus.
 # =============================================================================
