@@ -1450,19 +1450,19 @@ run("ST17b", {
     if (!cc %in% names(sel)) sel[, (cc) := 0L]
   sel[, MicroPVM_azimuth := microglia_final + CD163_F13A1_removed + oligo_doublet_removed]
   setnames(sel, c("oligo_doublet_removed","CD163_F13A1_removed","microglia_final","T_lymphocyte"),
-           c("minus_oligo_doublets","minus_CD163_F13A1","microglia_analysed","Lymphocyte_separate_class"))
+           c("minus_oligo_doublets","minus_CD163_F13A1","microglia_analyzed","Lymphocyte_separate_class"))
   sel[, after_doublet_removal := MicroPVM_azimuth - minus_oligo_doublets]
   ST17b_EXPECT <- c("Condition","Region","MicroPVM_azimuth","minus_oligo_doublets",
-                    "after_doublet_removal","minus_CD163_F13A1","microglia_analysed",
+                    "after_doublet_removal","minus_CD163_F13A1","microglia_analyzed",
                     "Lymphocyte_separate_class")
   setcolorder(sel, ST17b_EXPECT)
   sel <- sel[order(match(Region, c("Frontal","Hippo")), Condition)]
   print(as.data.frame(sel), row.names = FALSE)
   stopifnot("ST17b chain does not close" =
-              all(sel$after_doublet_removal - sel$minus_CD163_F13A1 == sel$microglia_analysed),
+              all(sel$after_doublet_removal - sel$minus_CD163_F13A1 == sel$microglia_analyzed),
             "ST17b totals disagree with the shipped figures (3081 / 95 / 162 / 2824 / 60)" =
               sum(sel$MicroPVM_azimuth) == 3081L && sum(sel$minus_oligo_doublets) == 95L &&
-              sum(sel$minus_CD163_F13A1) == 162L && sum(sel$microglia_analysed) == 2824L &&
+              sum(sel$minus_CD163_F13A1) == 162L && sum(sel$microglia_analyzed) == 2824L &&
               sum(sel$Lymphocyte_separate_class) == 60L)
   say("  chain closes: 3,081 Micro-PVM - 95 oligo doublets = 2,986 - 162 CD163+/F13A1+ = 2,824")
   say("  T-lymphocytes (n=60) are a SEPARATE Azimuth class and were never inside Micro-PVM.")

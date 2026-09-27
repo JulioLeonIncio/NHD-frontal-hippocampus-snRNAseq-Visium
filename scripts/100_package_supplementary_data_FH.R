@@ -110,7 +110,7 @@ ST18_DESC   <- data.table(sheet = depth_sheet, description = c(
   "C: depth-only artifact remaining under raw / log-normalized / thinned treatment, per region.",
   "D: NHD-over-control median depth ratio per compartment and region, with the balance call.",
   "E: for each Fig. 5d program, the loss measured against the loss depth alone can produce (control split at the same depth gap).",
-  "F: myeloid depth per condition and region for the Azimuth class and the analysed microglia, with the Kolmogorov-Smirnov comparison."))
+  "F: myeloid depth per condition and region for the Azimuth class and the analyzed microglia, with the Kolmogorov-Smirnov comparison."))
 
 # Referee-facing titles: the ST0 titles are working titles and were leaking onto the SI
 # contents page and the workbook README. TITLE_PUBLIC (from _sd_map_FH.R) is what the referee reads; the internal
