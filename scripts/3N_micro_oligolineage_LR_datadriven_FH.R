@@ -100,8 +100,11 @@ dat <- wide %>% filter(interaction_name_2 %in% keep_pairs) %>%
          pathway_name = factor(pathway_name,
                                levels = unique(rank_tab$pathway_name[
                                  match(keep_pairs, rank_tab$interaction_name_2)])))
-# a pair CellChat never scored in a given region/receiver is a true zero (both
-# conditions absent) — keep it visible as an open cross rather than a blank cell
+# A pair with no row for a given region/receiver was not reported by CellChat at P < 0.05 in
+# either condition: cellchat_all_LR_pairs.csv is subsetCommunication() output, which keeps only
+# P < 0.05 rows, so an absent cell is "not reported", not a measured zero probability. Every such cell is kept visible as an
+# open cross rather than a blank; the cross is keyed "receptor not detected", which the raw-count
+# detection gate below verifies cell by cell.
 grid_full <- expand_grid(interaction_name_2 = factor(keep_pairs, levels = rev(keep_pairs)),
                          target = factor(RECEIVERS, levels = RECEIVERS),
                          Region = factor(REGION_ORDER, levels = REGION_ORDER))
@@ -222,6 +225,66 @@ out <- bind_rows(
                             status = "EXCLUDED: astrocytic pseudo-ligand (SLC1A3+GLS)"))
 write.csv(out, file.path(TDIR, "figF4j_micro_oligolineage_LR_FH.csv"), row.names = FALSE)
 cat("Wrote tables/figF4j_micro_oligolineage_LR_FH.csv (", nrow(out), " rows)\n", sep = "")
+
+# ---- source CSV #2: the drawn grid, one row per cell ---------------
+# The CSV above lists what CellChat reported, so the panel's open crosses (cells with no
+# CellChat row) had no source data, and the raw-count receptor detection that justifies the
+# "receptor not detected" key was computed but never written. This table is the panel grid
+# itself: TOP_N pairs x receivers x regions, each drawn either as a dot or as a cross.
+#   prob_CON / prob_NHD : CellChat probability; 0 is a fill for "not reported at P < 0.05 in that
+#                         condition" (same fill as above). Crosses are 0 in both (reported in neither).
+#   dprob               : NHD - CON for dots; NA for crosses (no probability was drawn there).
+#   maxprob             : larger of the two probabilities (0 for crosses).
+#   rec_pct             : receptor detection in the receiving class, fraction 0-1 of nuclei with
+#                         >= 1 RAW count, the higher of the two conditions (pct_max); for a complex
+#                         the min over subunits (.pct_of above). NA = gene absent from the atlas.
+#   rec_below_floor     : is.na(rec_pct) | rec_pct < 0.10, as computed for the panel.
+# The existing CSV above is written first and untouched by this block.
+grid_tab <- dat %>%
+  mutate(drawn_as = ifelse(is.na(dprob) | maxprob == 0, "cross", "dot"),
+         prob_CON = ifelse(drawn_as == "cross", 0, prob_CON),
+         prob_NHD = ifelse(drawn_as == "cross", 0, prob_NHD),
+         dprob    = ifelse(drawn_as == "cross", NA_real_, dprob),
+         maxprob  = ifelse(drawn_as == "cross", 0, maxprob),
+         .pair_rank = match(as.character(interaction_name_2), keep_pairs)) %>%
+  arrange(.pair_rank, Region, target) %>%          # panel top-to-bottom, then region, receiver
+  transmute(interaction_name_2 = as.character(interaction_name_2), pathway_name = as.character(pathway_name),
+            target = as.character(target), Region = as.character(Region), drawn_as,
+            prob_CON, prob_NHD, dprob, maxprob, rec_pct, rec_below_floor)
+.shown <- out %>% filter(status == "shown") %>%
+  mutate(across(c(interaction_name_2, pathway_name, target, Region), as.character))
+.dots  <- grid_tab %>% filter(drawn_as == "dot")
+.cmp   <- .dots %>% inner_join(.shown, by = c("interaction_name_2", "target", "Region"), suffix = c("", ".shown"))
+# 24 / 12 are the counts of the shipped panel (and are cited in the Supplementary Data README);
+# if the pair list changes these asserts fire on purpose so the README/legend are re-checked.
+stopifnot(
+  "grid is not TOP_N pairs x receivers x regions" =
+    nrow(grid_tab) == TOP_N * length(RECEIVERS) * length(REGION_ORDER),
+  "grid has duplicated cells" = !anyDuplicated(grid_tab[, c("interaction_name_2", "target", "Region")]),
+  "grid is not 36 cells" = nrow(grid_tab) == 36,
+  "grid is not 24 dots" = sum(grid_tab$drawn_as == "dot") == 24,
+  "grid is not 12 crosses" = sum(grid_tab$drawn_as == "cross") == 12,
+  "grid dots != panel's drawn dots" = nrow(.dots) == nrow(dat_pt),
+  "grid crosses != panel's drawn crosses" = sum(grid_tab$drawn_as == "cross") == nrow(absent),
+  "a cross is drawn although the receptor clears the 10 % floor (legend 'receptor not detected' would be false)" =
+    all(grid_tab$rec_below_floor[grid_tab$drawn_as == "cross"]),
+  "dot cells are not exactly the 'shown' rows of the reported-pair CSV" =
+    nrow(.cmp) == nrow(.dots) && nrow(.cmp) == nrow(.shown),
+  "a dot's prob_CON/prob_NHD/dprob/maxprob differs from the reported-pair CSV" =
+    isTRUE(all.equal(.cmp$prob_CON, .cmp$prob_CON.shown, tolerance = 0)) &&
+    isTRUE(all.equal(.cmp$prob_NHD, .cmp$prob_NHD.shown, tolerance = 0)) &&
+    isTRUE(all.equal(.cmp$dprob,    .cmp$dprob.shown,    tolerance = 0)) &&
+    isTRUE(all.equal(.cmp$maxprob,  .cmp$maxprob.shown,  tolerance = 0)),
+  "grid pathway_name disagrees with the reported-pair CSV" = all(.cmp$pathway_name == .cmp$pathway_name.shown),
+  "rec_pct outside 0-1" = all(is.na(grid_tab$rec_pct) | (grid_tab$rec_pct >= 0 & grid_tab$rec_pct <= 1)))
+write.csv(grid_tab, file.path(TDIR, "figF4j_micro_oligolineage_LR_grid_FH.csv"), row.names = FALSE)
+cat(sprintf("Wrote tables/figF4j_micro_oligolineage_LR_grid_FH.csv (%d cells: %d dots, %d crosses; every cross below the 10 %% receptor floor, max cross rec_pct %.3f; %d rec_pct NA)\n",
+            nrow(grid_tab), sum(grid_tab$drawn_as == "dot"), sum(grid_tab$drawn_as == "cross"),
+            max(grid_tab$rec_pct[grid_tab$drawn_as == "cross"], na.rm = TRUE), sum(is.na(grid_tab$rec_pct))))
+cat("\n== crossed cells (receptor detection, raw counts) ==\n")
+print(as.data.frame(grid_tab %>% filter(drawn_as == "cross") %>%
+                    transmute(interaction_name_2, target, Region, rec_pct = round(rec_pct, 4), rec_below_floor)),
+      row.names = FALSE)
 
 cat("\n== shown pairs, per region/receiver ==\n")
 print(as.data.frame(dat_pt %>% arrange(Region, target, desc(abs(dprob))) %>%

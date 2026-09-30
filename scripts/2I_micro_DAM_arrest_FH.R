@@ -1,7 +1,7 @@
 # =============================================================================
 # 2I_micro_DAM_arrest_FH.R — F2e_micro_DAM_arrest_FH.R — Figure 2 panel I: the DAM-1 -> DAM-2 arrest contrast. frontal + HIPPOCAMPUS (2 regions). Microglia (Micro-PVM).
 # -----------------------------------------------------------------------------
-# Thesis panel.  States Figure 2 in one glance: NHD DAP12-null microglia enter
+# Thesis panel.  States Figure 2 in one glance: NHD DAP12-deficient microglia enter
 # the TREM2-INDEPENDENT DAM-1 program (homeostatic P2RY12 exit + APOE/FTH1/B2M/
 # CD74/HLA-DRA/C1QB induction) but arrest before the TREM2-DEPENDENT DAM-2 lipid
 # endpoint (PPARG/ITGAX/GPNMB/CLEC7A/TREM2 flat; LPL/CST7/LGALS3 never detected).
@@ -228,7 +228,7 @@ df_eff <- df_det %>% filter(eff_tier == "delta")   # strict effect-size tier
 # F2f_secretome_MAST is 3.90 in wide at base_size 8 / axis.text 6.3 -> 2.051 / 1.615 pt per
 # inch of width. Holding that ratio literally at this panel's new 2.396 in gives
 # FS = 0.614, which puts axis.text at 3.75 pt and every token under 5 pt -- below the
-# print floor for Acta Neuropathologica (and any journal). 2Y survived the same treatment
+# print floor for the journal (and any journal). 2Y survived the same treatment
 # only because it started at 4.60 in; 2I starts at 3.33 in, so the identical relative
 # shrink lands it far smaller.
 # Resolution: keep the REQUESTED geometry exactly, and scale fonts by the largest factor

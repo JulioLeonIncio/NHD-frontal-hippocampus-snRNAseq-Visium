@@ -1,6 +1,6 @@
 # =============================================================================
 # _sd_map_FH.R — The fixed map of the "Supplementary Data" package:
-# 11 themed multi-sheet workbooks built from the former single-table ST files.
+# 12 themed multi-sheet workbooks built from the former single-table ST files.
 # -----------------------------------------------------------------------------
 # Shared (sys.source'd) by
 #   * 100_package_supplementary_data_FH.R  — builds the workbooks from this map,
@@ -12,7 +12,6 @@
 # Pure data + pure functions; no side effects; base R only (the dictionary is sourced into a bare env).
 #
 # History.
-# (ST4) and network (ST5) from the package; those two ship inside the code release (reference_tables/).
 # CHANGING this map RENUMBERS every citation in the manuscript — the structure is asserted at the bottom.
 # Leon et al., Nasu-Hakola disease frontal cortex and hippocampus.
 # =============================================================================
@@ -41,10 +40,10 @@ SD_WB <- data.frame(stringsAsFactors = FALSE,
     "Gene sets and markers: the curated signature gene sets used for module scoring and program dot plots, with symbol-mapping provenance, and the top ten protein-coding positive markers per annotated cell type.",
     "Program effect sizes and sensitivity: program-level Cliff's delta per cell type and region for Figs. 2d, 3e, 4d and 5d, per-nucleus neuronal program scores, the hippocampal unresolved-cluster sensitivity, and the per-library RNA-integrity arm.",
     "Microglia: myeloid transcription-factor activity on the CollecTRI regulon behind Fig. 2h, with the admission gate and the down-sampling sensitivity arm, and the pooled Micro-PVM versus microglia-only comparison for eight activation genes.",
-    "Cross-cohort contrast with Zhou et al. 2023: direction consistency per cell type and region against the empirical chance baseline, and the same statistic recomputed per Zhou NHD donor arm with and without the shared donor.",
+    "Cross-cohort contrast with Zhou et al. 2023: direction consistency per cell type and region against the empirical chance baseline, and the same statistic recomputed per Zhou NHD donor arm with and without the shared donor; and TYROBP detection in the microglia of each Zhou et al. 2023 donor.",
     "Sequencing-depth diagnostics: per-compartment depth ratios, UMI-floor sweep, depth-only artifact by normalization, neuronal-program depth artifact and myeloid depth comparison (six sheets, A-F).",
     "Visium spatial transcriptomics: the spatial-domain annotation of every spot with the layer IV order statistics, program expression per domain and the per-gene band means of the Fig. 6d heatmap with the gene sets scored on tissue, the microglia-rich versus microglia-poor spot contrasts, and the cell2location composition of every domain.",
-    "Source data for the cell-cell communication and composition panels: the compensatory secretory routes of Fig. 2c, the CellChat pathway totals behind the chords of Figs. 3g, 3h and 5e, the ligand-receptor probabilities behind Figs. 3g, 3h, 4j, 5e and 5g, and the oligodendrocyte state composition of Fig. 4h."))
+    "Source data for the cell-cell communication and composition panels: the compensatory signaling routes of Fig. 2c, the CellChat pathway totals behind the chords of Figs. 3g, 3h and 5e, the ligand-receptor probabilities behind Figs. 3g, 3h, 4j, 5e and 5g, and the oligodendrocyte state composition of Fig. 4h."))
 
 # ---- sheets: one row per data sheet, in shipping order --------------------------------------------
 # key   = the sheet's id (the former table id; sub-sheets of a former multi-sheet table carry its id + suffix)
@@ -73,6 +72,7 @@ SD_SHEETS <- data.frame(stringsAsFactors = FALSE, rbind(
   c("ST13",  "ST13",  9,  "Direction_consistency",     14),
   c("ST19",  "ST19",  9,  "Donor_arms",                22),
   c("ST19b", "ST19",  9,  "Within_Zhou_donors",        22),
+  c("ST32",  "ST32",  9,  "TYROBP_per_donor",          NA),   # appended to workbook 9 (script 131); a table of its own, not a sub-sheet of ST19
   c("ST18A", "ST18",  10, "A_relative_RNA_content",    21),
   c("ST18B", "ST18",  10, "B_threshold_sweep",         21),
   c("ST18C", "ST18",  10, "C_artifact_by_treatment",   21),
@@ -103,7 +103,7 @@ SD_DROPPED <- data.frame(stringsAsFactors = FALSE, st = c("ST4", "ST5"), old_num
 
 # They have no old_number: they never shipped under the 27-file numbering, so sd_rekey_old() must not
 # map anything onto them and they are excluded from the SD_OLD_ORDER identities below.
-SD_NEW <- c("ST25","ST26","ST27","ST28","ST29","ST30","ST31")
+SD_NEW <- c("ST25","ST26","ST27","ST28","ST29","ST30","ST31","ST32")   # ST25-ST31 = workbook 12 (132); ST32 = workbook 9, sheet TYROBP_per_donor (131)
 
 # ---- the pre-consolidation order (old_number = position), still needed for the rename map -----------
 SD_OLD_ORDER <- c("ST0","ST1","ST2","ST3","ST4","ST5","ST6","ST7","ST8","ST9","ST10","ST11",
@@ -111,13 +111,14 @@ SD_OLD_ORDER <- c("ST0","ST1","ST2","ST3","ST4","ST5","ST6","ST7","ST8","ST9","S
 
 # ---- referee-facing titles of the former tables (the "what this sheet holds" line of every README block) ----
 SD_TITLE_PUBLIC <- c(
-  ST25  = "Compensatory secretory routes of Fig. 2c: per-gene control and NHD expression with the fitted route and the detection floor.",
+  ST25  = "Compensatory signaling routes of Fig. 2c: per-gene detection in control and NHD myeloid nuclei, raw and depth-adjusted, with the route and the detection floor.",
   ST26  = "CellChat pathway totals behind the chord diagrams of Figs. 3g, 3h and 5e: summed communication probability per sender, receiver and pathway, with its share of that region and condition.",
   ST27  = "Microglial ligand to glial receptor communication probabilities behind Fig. 3g (astrocytes) and Fig. 4j (oligodendrocyte lineage), per region.",
   ST28  = "Astrocytic ligand to neuronal receptor communication probabilities behind Fig. 3h, with the raw-count detection of each receptor.",
   ST29  = "Microglial ligand to neuronal receptor communication probabilities behind Fig. 5e, per region and neuronal class.",
   ST30  = "The Fig. 5e pairs resolved by neuronal subtype (Fig. 5g): mean expression and detection of each receptor per subtype, region and condition.",
   ST31  = "Oligodendrocyte state composition behind Fig. 4h: nuclei and fraction per state, region and condition.",
+  ST32  = "TYROBP, TREM2 and CSF1R detection in the microglia of each Zhou et al. 2023 donor (3 NHD, 11 controls) with each donor's median UMI depth, from the reprocessed GSE190015 matrices; NHD3 is donor 861, the donor shared with this study.",
   ST0   = "Data dictionary: the columns of every sheet of every Supplementary Data workbook and the analysis-wide conventions.",
   ST1   = "Per-nucleus MAST differential expression, NHD versus control, per cell type and region and per frontal neuronal subclass.",
   ST2   = "Pseudobulk DESeq2 differential expression per cell type and region (confirmatory tier; hippocampal P values withheld).",
@@ -276,6 +277,8 @@ stopifnot(nrow(SD_WB) == 12L, identical(SD_WB$workbook, 1:12), !anyDuplicated(SD
           sd_workbook_of("ST13") == 9L, sd_workbook_of("ST18") == 10L, sd_workbook_of("ST22") == 11L,
           identical(sd_single_sheet_wb(), c(1L, 3L, 4L)),
           identical(sd_ref("ST13"), "Supplementary Data 9, sheet Direction_consistency"),
+          identical(sd_ref("ST32"), "Supplementary Data 9, sheet TYROBP_per_donor"),
+          identical(sd_sheets_of("ST19"), c("Donor_arms", "Within_Zhou_donors")),                 # ST32 is appended after ST19's sheets, never between them
           identical(sd_ref("ST1"), "Supplementary Data 3"), identical(sd_ref("ST3"), "Supplementary Data 5"), identical(sd_ref("ST18"), "Supplementary Data 10"),
           identical(sd_ref("ST3b"), "Supplementary Data 5, sheet Micro_PVM_detection_gated"),
           identical(sd_ref(c("ST15","ST15b","ST16")), "Supplementary Data 7, sheets Unresolved_sensitivity, RIN_per_library and RIN_gap"),

@@ -67,7 +67,7 @@ oligo_programme_sets <- function(sigs) {
     "Lipid uptake / salvage"  = c("SLC44A1","NPC1","LDLR"),
     # The discriminator row. A coordinated fall of SREBF2 + INSIG1 +
     # LDLR + the sterol enzymes is also the canonical signature of sterol repletion sensed
-    # at the er — which in a DAP12-null brain, where phagocytes cannot clear myelin
+    # at the er — which in a DAP12-deficient brain, where phagocytes cannot clear myelin
     # cholesterol, is a live alternative to synthesis failure. If the cell were
     # sterol-LOADED, LXR targets would rise. Measured: ABCG1 -0.01/-0.10, NPC1
     # -0.12/-0.13, SREBF1 -0.02/-0.07, MYLIP +0.02 — flat to down, i.e. the LXR arm is

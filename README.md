@@ -14,7 +14,7 @@ supplementary figure and Supplementary Data table of the paper.
   builds the working atlas; `22_publication_theme_FH.R` holds palettes and the figure theme; `30`–`47` differential
   expression (per-nucleus MAST, pseudobulk DESeq2, the dual-method merge, signed rankings); `44*`, `110b` gene-set
   enrichment; `02_`, `68_`, `70b_` transcription-factor activity; `50_` ligand–receptor analysis; `60_`, `116*` neuron
-  re-annotation and the L4 IT label transfer; `70_`, `105_`, `106_`, `99b/c` the cross-cohort comparison with Zhou et al.
+  re-annotation and the L4 IT label transfer; `70_`, `105_`, `106_`, `131_`, `99b/c` the cross-cohort comparison with Zhou et al.
   2023; `65_`–`74_`, `107`–`127` the Visium analyses; figure scripts are named by figure and panel (`06d`/`43` Fig. 1,
   `2*` Fig. 2, `3*` Figs 3–4, `4*`/`62`/`64` Fig. 5, `70_suppfig1`, `109` supplementary figures); `90_`, `100_`,
   `102_`, `125_`–`127_` the Supplementary Data tables and the data-deposition bundle.
@@ -68,7 +68,7 @@ Scripts stop with a message if `NHD_PROJ` is unset. Copy `scripts/` into `$NHD_P
    enrichment with `44_gsea_MAST_cliffs_FH.R` and `44b_gsea_subclass_FH.R`.
 3. **Programs and networks** — the per-cell-type state and program caches (`2J0_`, `3F_`, `3M_`, `4C2_`), transcription
    factors (`02_`, `68_`), ligand–receptor (`50_`), the Zhou et al. comparison (`105_zhou_pseudobulk_cache_FH.R`,
-   `70_zhou_crosscohort_FH.R`, `106_zhou_crosscohort_arms_FH.R`).
+   `70_zhou_crosscohort_FH.R`, `106_zhou_crosscohort_arms_FH.R`, `131_zhou_TYROBP_per_donor_FH.R`).
 4. **Figures** — the panel scripts; each reads only the tables and caches written above and can be re-run alone.
    Per-cell caches carry modification-time guards and rebuild themselves when the atlas changes.
 5. **Tables** — `90_build_supplementary_tables_FH.R`, `126_`, `127_`, then `100_package_supplementary_data_FH.R`.
@@ -80,7 +80,7 @@ Visium, in order: tissue call and registration (`107_`, `108a`, `108c`–`108e`,
 `123_`, `125_`, `126_`). `112_visium_downstream_rebuild_FH.sh` runs the downstream Visium steps in dependency order.
 
 Zhou et al. cohort (`zhou_reprocessing/`, run with `NHD_PROJ` set and `NHD_ZHOU_DIR` pointing at the folder that holds the
-GEO downloads): `01_zhou_QC_Azimuth_Harmony.R`, then `04_zhou_cross_cohort_validation.R`, then `scripts/105_`, `70_`, `106_`;
+GEO downloads): `01_zhou_QC_Azimuth_Harmony.R`, then `04_zhou_cross_cohort_validation.R`, then `scripts/105_`, `70_`, `106_`, `131_`;
 `70_suppfig2_zhou_QC.R` draws Supplementary Fig. 2a–d.
 
 Stochastic steps (clustering, UMAP, bootstraps, permutations, subsampling) set their seeds in the scripts.

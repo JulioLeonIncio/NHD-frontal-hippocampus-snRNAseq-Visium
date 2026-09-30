@@ -63,7 +63,7 @@ MARKERS <- list(
   # Pooling them with AIF1/C1QB/CD74 under one
   # "glial activation" heading let SERPINA3 (+3.54, the largest effect in the dataset) be
   # read as evidence about microglia. The two limbs are now named separately.
-  "Microglial activation" = c("AIF1","C1QB","CD74","CSF1R"),   # TYROBP removed — the NHD donor is TYROBP-null, so it biases any NHD score downward by construction
+  "Microglial activation" = c("AIF1","C1QB","CD74","CSF1R"),   # TYROBP removed: it is the mutated gene, and the NHD donor's retained start-loss transcript does not report DAP12 protein, so it would bias any NHD score
   "Astrocyte reactive"    = c("GFAP","SERPINA3","VIM","CD44"))
 
 # ---------------------------------------------------------------------------
@@ -93,7 +93,7 @@ LAYER_GENES <- c(deep = c("PCP4","TLE4","FOXP2","SEMA3E","HS3ST4"),
                  upper = c("CUX2","RORB","LAMP5","CALB1"),
                  class = c("SLC17A7","GAD1","GAD2"),
                  myelin = c("MBP","PLP1","MOBP"),
-                 glial = c("AIF1","SERPINA3","TREM2","GFAP"))          # TYROBP removed (TYROBP-null donor); it remains a row in the Fig 6d gene heatmap, where its absence is the point
+                 glial = c("AIF1","SERPINA3","TREM2","GFAP"))          # TYROBP removed (the mutated gene; see the program list above); it remains a row in the Fig 6d gene heatmap
 LAYER_GENES <- unname(LAYER_GENES)
 EXPORT_GENES <- unique(c(POSCTRL, LAYER_GENES))
 

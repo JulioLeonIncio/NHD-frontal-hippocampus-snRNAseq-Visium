@@ -2,10 +2,10 @@
 # 70_suppfig2_zhou_QC.R — Supplementary Figure 2 — Zhou et al. 2023 external cohort: QC + annotation
 # Sibling of Supp Fig 1 (NHD atlas QC). Same house style (theme_pub, PAL_*),
 # but the Zhou cohort is single-region (occipital cortex), so the grouping
-# dimension is DIAGNOSIS (CON vs NHD/DAP12-null) instead of Region.
+# dimension is DIAGNOSIS (CON vs NHD/DAP12-deficient) instead of Region.
 #
 # Cohort: Zhou et al. 2023 Nat Immunol. Occipital cortex.
-#   n = 3 NHD (DAP12-null: NHD1/NHD3 c.2T>C, NHD2 c.141Gdel) vs 11 CON.
+#   n = 3 NHD (DAP12-deficient: NHD1/NHD3 c.2T>C, NHD2 c.141Gdel) vs 11 CON.
 #   14,293 NHD + 49,065 CON = 63,358 nuclei; 8 annotated cell types.
 #
 # Panels (mirror atlas Supp Fig 1 a-e; no embedded caption banner):
@@ -544,7 +544,7 @@ manifest <- c(
   "# Supplementary Figure 2 — Zhou 2023 external cohort QC + annotation",
   "",
   "**Cohort:** Zhou et al. 2023 *Nat Immunol* — human OCCIPITAL cortex snRNA-seq.",
-  sprintf("**Design:** %d NHD (DAP12-null) vs %d CON donors; %s nuclei; %d annotated cell types.",
+  sprintf("**Design:** %d NHD (DAP12-deficient) vs %d CON donors; %s nuclei; %d annotated cell types.",
           qc$n_nhd, qc$n_con, format(qc$n_total, big.mark = ","), length(qc$ct_counts)),
   sprintf("**Diagnosis cells:** CON = %s, NHD = %s.",
           format(qc$diag_cells["CON"], big.mark = ","),
@@ -556,7 +556,7 @@ manifest <- c(
   "",
   "## Legend (caption — belongs here, NOT embedded in the figure)",
   paste("**Supplementary Figure 2. External-cohort QC and cell-type",
-        "annotation (Zhou et al. 2023, occipital cortex; 3 NHD DAP12-null vs",
+        "annotation (Zhou et al. 2023, occipital cortex; 3 NHD DAP12-deficient vs",
         "11 CON).** (a) Per-donor QC violins (UMIs, Genes, % mitochondrial),",
         "one violin per donor, CON vs NHD grouped (dashed divider) with white",
         "boxplot inset; values capped at the per-metric 99th percentile for",

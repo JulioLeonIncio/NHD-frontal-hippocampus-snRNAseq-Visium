@@ -23,7 +23,7 @@
 #
 # Also runs the PVM-INTRINSIC NHD-vs-CON contrast. The composition-only argument
 # assumes PVM per-cell expression is condition-invariant — an assumption that is
-# questionable when TYROBP is null and PVM express TYROBP, so it is tested rather
+# questionable when DAP12 is deficient and PVM express TYROBP, so it is tested rather
 # than assumed. It is UNDERPOWERED (CON 19 / NHD 47 Frontal; 53 / 43 Hippo) and must
 # be reported as such.
 #
